@@ -133,7 +133,7 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 }
 
 //==============================================================================
-BlankAudioProcessorEditor::BlankAudioProcessorEditor (BlankAudioProcessor& p)
+DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
     delayTimeSlider(*audioProcessor.apvts.getParameter("Delay Time"), "ms"),
     delayTimeSliderAttachment(audioProcessor.apvts, "Delay Time", delayTimeSlider)
@@ -158,12 +158,12 @@ BlankAudioProcessorEditor::BlankAudioProcessorEditor (BlankAudioProcessor& p)
     // setResizeLimits(50, 0, x, y);
 }
 
-BlankAudioProcessorEditor::~BlankAudioProcessorEditor()
+DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 {
 }
 
 //==============================================================================
-void BlankAudioProcessorEditor::paint (juce::Graphics& g)
+void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
 
@@ -178,7 +178,7 @@ void BlankAudioProcessorEditor::paint (juce::Graphics& g)
 //     g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
 }
 
-void BlankAudioProcessorEditor::resized()
+void DelayAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
@@ -194,7 +194,7 @@ void BlankAudioProcessorEditor::resized()
 }
 
 
-std::vector<juce::Component*> BlankAudioProcessorEditor::getComps()
+std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
 {
   return
   {

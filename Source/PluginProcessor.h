@@ -10,18 +10,30 @@
 
 #include <JuceHeader.h>
 
+struct ChainSettings {
+  float delayTime {0};
+};
+
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
+
+using Filter = juce::dsp::IIR::Filter<float>;
+
+using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+
+using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
+
 //==============================================================================
 /**
 */
-class BlankAudioProcessor  : public juce::AudioProcessor
+class DelayAudioProcessor  : public juce::AudioProcessor
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
 {
 public:
     //==============================================================================
-    BlankAudioProcessor();
-    ~BlankAudioProcessor() override;
+    DelayAudioProcessor();
+    ~DelayAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -61,6 +73,9 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
+    MonoChain chain;
+
+    void updateFilters(double sampleRate);
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlankAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };

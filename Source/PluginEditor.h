@@ -71,11 +71,11 @@ private:
 //==============================================================================
 /**
 */
-class BlankAudioProcessorEditor  : public juce::AudioProcessorEditor
+class DelayAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    BlankAudioProcessorEditor (BlankAudioProcessor&);
-    ~BlankAudioProcessorEditor() override;
+    DelayAudioProcessorEditor (DelayAudioProcessor&);
+    ~DelayAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
@@ -84,7 +84,7 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    BlankAudioProcessor& audioProcessor;
+    DelayAudioProcessor& audioProcessor;
 
     const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
     // g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
@@ -106,5 +106,5 @@ private:
 
     RotaryLookAndFeel lnf;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BlankAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessorEditor)
 };
