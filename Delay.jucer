@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="WeqRwT" name="Delay" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="1" displaySplashScreen="1" jucerFormatVersion="1"
+              companyName="lachesis" companyWebsite="github.com/lachesis17"
+              companyEmail="github.com/lachesis17" pluginFormats="buildStandalone,buildVST3">
+  <MAINGROUP id="f0vJuB" name="Delay">
+    <GROUP id="{A643B9BC-B1D4-05BA-9128-CB4C1C39840C}" name="Source">
+      <FILE id="K8xQ8y" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="UYw2rD" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="zJKjSN" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="pIbNM9" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+    <FILE id="lTfhXt" name="Orbitron.ttf" compile="0" resource="1" file="Resources/Orbitron.ttf"/>
+    <FILE id="o5Yh91" name="resources.rc" compile="0" resource="1" file="Resources/resources.rc"/>
+    <FILE id="fBVS2L" name="icon.png" compile="0" resource="1" file="Resources/icon.png"/>
+    <FILE id="p3TZRi" name="Monomaniac.ttf" compile="0" resource="1" file="Resources/Monomaniac.ttf"/>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="blank"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="blank"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../Users/anton.farmer/Desktop/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
