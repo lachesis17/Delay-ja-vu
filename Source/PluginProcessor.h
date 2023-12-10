@@ -12,6 +12,7 @@
 
 struct ChainSettings {
   float delayTime {0};
+  float feedbackTime {0};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -73,9 +74,20 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
-    MonoChain chain;
+    MonoChain leftChain, rightChain;
 
     void updateFilters(double sampleRate);
+
+    static const int maxBufferSize = 96000;
+    float circularBufferLeft[maxBufferSize] = {0.0f};
+    float circularBufferRight[maxBufferSize] = {0.0f};
+    int writeIndexLeft = 0;
+    int writeIndexRight = 0;
+    float lastDelayTime = 100.0f;
+    float coeff = 0;
+    float delayTime;
+    float feedbackTime;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };

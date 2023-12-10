@@ -113,7 +113,12 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
     juce::String str;
 
-    if(auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
+    if(auto* floatParam = dynamic_cast<juce::AudioParameterInt*>(param))
+    {
+        float val = getValue();
+        str = juce::String(val, 0);
+    }
+    else if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
     {
         float val = getValue();
         str = juce::String(val, 0);
@@ -136,7 +141,9 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
     delayTimeSlider(*audioProcessor.apvts.getParameter("Delay Time"), "ms"),
-    delayTimeSliderAttachment(audioProcessor.apvts, "Delay Time", delayTimeSlider)
+    delayTimeSliderAttachment(audioProcessor.apvts, "Delay Time", delayTimeSlider),
+    feedbackSlider(*audioProcessor.apvts.getParameter("Feedback"), ""),
+    feedbackSliderAttachment(audioProcessor.apvts, "Feedback", feedbackSlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -149,6 +156,14 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     delayTimeLabel.setText("Delay Time", juce::dontSendNotification);
     delayTimeLabel.attachToComponent(&delayTimeSlider, true);
     //delayTimeSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "Delay Time", delayTimeSlider);
+
+    feedbackSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    feedbackSlider.setTextValueSuffix("");
+    addAndMakeVisible(feedbackSlider);
+    addAndMakeVisible(feedbackLabel);
+    feedbackLabel.setFont(juce::Font(typeface).withHeight(15.5f));
+    feedbackLabel.setText("Feedback", juce::dontSendNotification);
+    feedbackLabel.attachToComponent(&feedbackSlider, true);
 
     setSize (650, 650);
     setResizable(true,false);
@@ -183,12 +198,14 @@ void DelayAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     auto bounds = getLocalBounds();
-    bounds.reduced(10);
-    bounds.removeFromTop(bounds.getHeight() * 0.5f);
+    bounds = bounds.reduced(JUCE_LIVE_CONSTANT(100));
+    //bounds.removeFromTop(bounds.getHeight() * 0.5f);
 
-    auto delayArea = bounds.removeFromRight(bounds.getWidth() * 0.5f);
 
-    delayTimeSlider.setBounds(delayArea * 0.67f);
+    auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.9f));
+
+    delayTimeSlider.setBounds(delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.5f)));
+    feedbackSlider.setBounds(delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(1.f)));
     //delayTimeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 100, 50);
     //delayTimeSlider.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 50, 500, 75);
 }
@@ -198,6 +215,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
 {
   return
   {
-    &delayTimeSlider
+    &delayTimeSlider,
+    &feedbackSlider
   };
 }

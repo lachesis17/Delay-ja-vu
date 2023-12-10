@@ -90,19 +90,22 @@ private:
     // g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
 
     RotarySliderWithLabels
-    delayTimeSlider;
+    delayTimeSlider,
+    feedbackSlider;
 
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
 
     Attachment
-    delayTimeSliderAttachment;
+    delayTimeSliderAttachment,
+    feedbackSliderAttachment;
 
     std::vector<juce::Component*> getComps();
 
     //juce::Slider delayTimeSlider;
     //std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> delayTimeSliderAttachment;
     juce::Label delayTimeLabel;
+    juce::Label feedbackLabel;
 
     RotaryLookAndFeel lnf;
 

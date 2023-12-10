@@ -22,6 +22,8 @@ DelayAudioProcessor::DelayAudioProcessor()
                        ), apvts (*this, nullptr, "Parameters", createParameters())
 #endif
 {
+    memset(circularBufferLeft, 0, sizeof(float) * maxBufferSize);
+    memset(circularBufferRight, 0, sizeof(float) * maxBufferSize);
 }
 
 DelayAudioProcessor::~DelayAudioProcessor()
@@ -91,22 +93,22 @@ void DelayAudioProcessor::changeProgramName (int index, const juce::String& newN
 }
 
 //==============================================================================
-void DelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
     juce::dsp::ProcessSpec spec;
-
     spec.maximumBlockSize = samplesPerBlock;
-
-    spec.numChannels = 1;
-
+    spec.numChannels = 2;
     spec.sampleRate = sampleRate;
 
-    chain.prepare(spec);
+    leftChain.prepare(spec);
+    rightChain.prepare(spec);
 
-    //updateFilters(sampleRate); 
+    coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect
+
+    auto chainsettings = getChainSettings(apvts);
+    delayTime = chainsettings.delayTime;
 }
+
 
 void DelayAudioProcessor::releaseResources()
 {
@@ -142,27 +144,54 @@ bool DelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 
 void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    //updateFilters();
+    const int numChannels = buffer.getNumChannels();
+    const int numSamples = buffer.getNumSamples();
+
+    auto chainsettings = getChainSettings(apvts);
+    feedbackTime = chainsettings.feedbackTime;
+    float newDelayTime = chainsettings.delayTime;
+
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+    const float* inData = buffer.getReadPointer(channel);
+    float* outData = buffer.getWritePointer(channel);
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            delayTime += (newDelayTime - delayTime) * coeff;
+
+            if (channel == 0)
+            {
+                int readIndexLeft = (writeIndexLeft - int(delayTime * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
+                float delayedSample = circularBufferLeft[readIndexLeft];
+                circularBufferLeft[writeIndexLeft] = inData[sample] + feedbackTime * delayedSample;
+                outData[sample] = delayedSample;
+                writeIndexLeft = (writeIndexLeft + 1) % maxBufferSize;
+            }
+            else if (channel == 1)
+            {
+                int readIndexRight = (writeIndexRight - int(delayTime * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
+                float delayedSample = circularBufferRight[readIndexRight];
+                circularBufferRight[writeIndexRight] = inData[sample] + feedbackTime * delayedSample;
+                outData[sample] = delayedSample;
+                writeIndexRight = (writeIndexRight + 1) % maxBufferSize;
+            }
+        }
+    }
 
     juce::dsp::AudioBlock<float> block(buffer);
+    auto leftBlock = block.getSingleChannelBlock(0);
+    auto rightBlock = block.getSingleChannelBlock(1);
+    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+    leftChain.process(leftContext);
+    rightChain.process(rightContext);
 
-    auto monoBlock = block.getSingleChannelBlock(0);
-
-    juce::dsp::ProcessContextReplacing<float> monoContext(monoBlock);
-
-    chain.process(monoContext);
-
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-    }
+    lastDelayTime = newDelayTime;
 }
 
 //==============================================================================
@@ -195,6 +224,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     ChainSettings settings;
 
     settings.delayTime = apvts.getRawParameterValue("Delay Time")->load();
+    settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
 
     return settings;
 }
@@ -211,7 +241,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("Delay Time", "Delay Time", juce::NormalisableRange<float>(0.f, 1.f, 0.01f, 1.f), 0.5f));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Time", "Delay Time", 1, 2000, 320));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 0.98f, 0.01f, 1.f), 0.25f));
 
     return { params.begin(), params.end() };
 }
