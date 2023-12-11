@@ -180,42 +180,35 @@ DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 //==============================================================================
 void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-
-    g.setGradientFill(ColourGradient (Colour(23, 0, 62), 0.125f*(float) getWidth(), 0.125f*(float) getHeight(),
-                                       Colour(0, 0, 0), 0.875f*(float) getWidth(), 0.875f*(float) getHeight(), true));
+    g.setGradientFill(ColourGradient(Colour(23, 0, 62), 0.125f * (float)getWidth(), 0.125f * (float)getHeight(),
+                                     Colour(0, 0, 0), 0.875f * (float)getWidth(), 0.875f * (float)getHeight(), true));
     g.fillAll();
     
-    g.setColour (juce::Colours::white);
+    g.setColour(juce::Colours::white);
     g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
 
-    auto bounds = getLocalBounds();
-    bounds = bounds.removeFromTop(JUCE_LIVE_CONSTANT(100));
-    auto topleft = bounds.removeFromLeft(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.4275f));
-    auto topright = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.75f));
-    auto bottom = getLocalBounds();
-    bottom = bottom.removeFromBottom(JUCE_LIVE_CONSTANT(100));
-    auto bottomleft = bottom.removeFromLeft(bottom.getWidth() * JUCE_LIVE_CONSTANT(0.5f));
-    auto bottomright = bottom.removeFromRight(bottom.getWidth() * JUCE_LIVE_CONSTANT(1.f));
+    juce::Rectangle<int> delayTimeSliderLeftBounds = delayTimeSliderLeft.getBounds();
+    juce::Rectangle<int> delayTimeSliderRightBounds = delayTimeSliderRight.getBounds();
+    juce::Rectangle<int> feedbackSliderBounds = feedbackSlider.getBounds();
+    juce::Rectangle<int> dryWetBounds = dryWetSlider.getBounds();
 
-    g.drawFittedText("Delay Time Left", topleft, juce::Justification::centred, 1);
-    g.drawFittedText("Delay Time Right", topright, juce::Justification::centred, 1);
-    g.drawFittedText("Feedbaack", bottomleft, juce::Justification::centred, 1);
-    g.drawFittedText("Dry / Wet", bottomright, juce::Justification::centred, 1);
+    float windowHeight = static_cast<float>(getHeight());
 
-    // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    // g.setColour (juce::Colours::white);
-    // g.setFont (15.0f);
-    // g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    delayTimeSliderLeftBounds.setY(delayTimeSliderLeftBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
+    delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
+    feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
+    dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
+
+    g.drawFittedText("Delay Time Left", delayTimeSliderLeftBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Delay Time Right", delayTimeSliderRightBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Feedback", feedbackSliderBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Dry / Wet", dryWetBounds, juce::Justification::centred, 1);
 }
 
 void DelayAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
     auto bounds = getLocalBounds();
     bounds = bounds.reduced(JUCE_LIVE_CONSTANT(50));
-    //bounds.removeFromTop(bounds.getHeight() * 0.5f);
 
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
     auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));

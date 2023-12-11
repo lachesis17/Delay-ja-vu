@@ -95,22 +95,15 @@ void DelayAudioProcessor::changeProgramName (int index, const juce::String& newN
 //==============================================================================
 void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::dsp::ProcessSpec spec;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = 2;
-    spec.sampleRate = sampleRate;
+    const juce::dsp::ProcessSpec spec{sampleRate, static_cast<juce::uint32>(samplesPerBlock), 2};
 
     leftChain.prepare(spec);
     rightChain.prepare(spec);
 
     coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect : one-pole filter
 
-    auto chainsettings = getChainSettings(apvts);
-    delayTimeLeft = chainsettings.delayTimeLeft;
-    delayTimeRight = chainsettings.delayTimeRight;
     smoothedDelayTimeLeft.reset(sampleRate, 0.05f);
     smoothedDelayTimeRight.reset(sampleRate, 0.05f);
-    smoothedFeedback.reset(sampleRate, 0.05f);
 }
 
 
@@ -169,40 +162,34 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         for (int sample = 0; sample < numSamples; ++sample)
         {
 
-            if (channel == 0)
+            if (channel == 0) // left channel
             {
                 smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
-                smoothedFeedback.setTargetValue(feedbackTime);
-
                 delayTimeLeft = smoothedDelayTimeLeft.getNextValue();
-                feedbackTime = smoothedFeedback.getNextValue();
 
                 delayTimeLeft += (smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff;
-                //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff;
+                //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
 
                 int readIndexLeft = (writeIndexLeft - int(delayTimeLeft * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferLeft[readIndexLeft];
                 circularBufferLeft[writeIndexLeft] = inData[sample] + feedbackTime * delayedSample;
-                //outData[sample] = delayedSample;
+                //outData[sample] = delayedSample; // 100% wet
                 outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // dry / wet
                 writeIndexLeft = (writeIndexLeft + 1) % maxBufferSize;
             }
-            else if (channel == 1)
+            else if (channel == 1) // right channel
             {
                 smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
-                smoothedFeedback.setTargetValue(feedbackTime);
-
                 delayTimeRight = smoothedDelayTimeRight.getNextValue();
-                feedbackTime = smoothedFeedback.getNextValue();
 
                 delayTimeRight += (smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff;
-                //delayTimeRight += (newDelayTimeRight - delayTimeRight) * coeff;
+                //delayTimeRight += (newDelayTimeRight - delayTimeRight) * coeff; // non-smoothed, apply one-pole filter
 
                 int readIndexRight = (writeIndexRight - int(delayTimeRight * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferRight[readIndexRight];
                 circularBufferRight[writeIndexRight] = inData[sample] + feedbackTime * delayedSample;
-                //outData[sample] = delayedSample;
-                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample;
+                //outData[sample] = delayedSample; // 100% wet
+                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // dry / wet
                 writeIndexRight = (writeIndexRight + 1) % maxBufferSize;
             }
         }

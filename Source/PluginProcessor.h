@@ -77,7 +77,7 @@ public:
 
 private:
     MonoChain leftChain, rightChain;
-    juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback;
+    juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight;
 
     void updateFilters(double sampleRate);
 
