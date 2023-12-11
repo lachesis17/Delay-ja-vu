@@ -11,8 +11,11 @@
 #include <JuceHeader.h>
 
 struct ChainSettings {
-  float delayTime {0};
+  float delayTimeLeft {0};
+  float delayTimeRight {0};
   float feedbackTime {0};
+  float smoothedDelayTimeLeft {0};
+  float smoothedFeedbackTime {0};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -75,6 +78,7 @@ public:
 
 private:
     MonoChain leftChain, rightChain;
+    juce::SmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback;
 
     void updateFilters(double sampleRate);
 
@@ -83,9 +87,11 @@ private:
     float circularBufferRight[maxBufferSize] = {0.0f};
     int writeIndexLeft = 0;
     int writeIndexRight = 0;
-    float lastDelayTime = 100.0f;
+    float lastDelayTimeLeft = 100.0f;
+    float lastDelayTimeRight = 100.0f;
     float coeff = 0;
-    float delayTime;
+    float delayTimeLeft;
+    float delayTimeRight;
     float feedbackTime;
 
     //==============================================================================

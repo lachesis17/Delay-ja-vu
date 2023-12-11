@@ -106,7 +106,11 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect
 
     auto chainsettings = getChainSettings(apvts);
-    delayTime = chainsettings.delayTime;
+    delayTimeLeft = chainsettings.delayTimeLeft;
+    delayTimeRight = chainsettings.delayTimeRight;
+    smoothedDelayTimeLeft.reset(sampleRate, 0.05);
+    smoothedDelayTimeRight.reset(sampleRate, 0.05);
+    smoothedFeedback.reset(sampleRate, 0.05);
 }
 
 
@@ -153,7 +157,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     auto chainsettings = getChainSettings(apvts);
     feedbackTime = chainsettings.feedbackTime;
-    float newDelayTime = chainsettings.delayTime;
+    float newDelayTimeLeft = chainsettings.delayTimeLeft;
+    float newDelayTimeRight = chainsettings.delayTimeRight;
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
@@ -162,11 +167,19 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            delayTime += (newDelayTime - delayTime) * coeff;
 
             if (channel == 0)
             {
-                int readIndexLeft = (writeIndexLeft - int(delayTime * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
+                smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
+                smoothedFeedback.setTargetValue(feedbackTime);
+
+                delayTimeLeft = smoothedDelayTimeLeft.getNextValue();
+                feedbackTime = smoothedFeedback.getNextValue();
+
+                delayTimeLeft += (smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff;
+                //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff;
+
+                int readIndexLeft = (writeIndexLeft - int(delayTimeLeft * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferLeft[readIndexLeft];
                 circularBufferLeft[writeIndexLeft] = inData[sample] + feedbackTime * delayedSample;
                 outData[sample] = delayedSample;
@@ -174,7 +187,17 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             }
             else if (channel == 1)
             {
-                int readIndexRight = (writeIndexRight - int(delayTime * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
+
+                smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
+                smoothedFeedback.setTargetValue(feedbackTime);
+
+                delayTimeRight = smoothedDelayTimeRight.getNextValue();
+                feedbackTime = smoothedFeedback.getNextValue();
+
+                delayTimeRight += (smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff;
+                //delayTimeRight += (newDelayTimeRight - delayTimeRight) * coeff;
+
+                int readIndexRight = (writeIndexRight - int(delayTimeRight * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferRight[readIndexRight];
                 circularBufferRight[writeIndexRight] = inData[sample] + feedbackTime * delayedSample;
                 outData[sample] = delayedSample;
@@ -191,7 +214,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     leftChain.process(leftContext);
     rightChain.process(rightContext);
 
-    lastDelayTime = newDelayTime;
+    lastDelayTimeLeft = newDelayTimeLeft;
+    lastDelayTimeRight = newDelayTimeRight;
 }
 
 //==============================================================================
@@ -223,7 +247,8 @@ void DelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     ChainSettings settings;
 
-    settings.delayTime = apvts.getRawParameterValue("Delay Time")->load();
+    settings.delayTimeLeft = apvts.getRawParameterValue("Delay Left")->load();
+    settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
     settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
 
     return settings;
@@ -241,7 +266,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Time", "Delay Time", 1, 2000, 320));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Left", "Delay Left", 1, 1500, 320));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 1, 1500, 320));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 0.98f, 0.01f, 1.f), 0.25f));
 
     return { params.begin(), params.end() };
