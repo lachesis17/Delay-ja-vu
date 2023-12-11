@@ -14,8 +14,7 @@ struct ChainSettings {
   float delayTimeLeft {0};
   float delayTimeRight {0};
   float feedbackTime {0};
-  float smoothedDelayTimeLeft {0};
-  float smoothedFeedbackTime {0};
+  float dryWet {0};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -78,7 +77,7 @@ public:
 
 private:
     MonoChain leftChain, rightChain;
-    juce::SmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback;
+    juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback;
 
     void updateFilters(double sampleRate);
 

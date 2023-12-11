@@ -145,36 +145,25 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     delayTimeSliderRight(*audioProcessor.apvts.getParameter("Delay Right"), "ms"),
     delayTimeSliderAttachmentRight(audioProcessor.apvts, "Delay Right", delayTimeSliderRight),
     feedbackSlider(*audioProcessor.apvts.getParameter("Feedback"), ""),
-    feedbackSliderAttachment(audioProcessor.apvts, "Feedback", feedbackSlider)
+    feedbackSliderAttachment(audioProcessor.apvts, "Feedback", feedbackSlider),
+    dryWetSlider(*audioProcessor.apvts.getParameter("Dry Wet"), ""),
+    dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    
     delayTimeSliderLeft.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
     addAndMakeVisible(delayTimeSliderLeft);
-    //addAndMakeVisible(delayTimeLabel);
-    //delayTimeLabel.setFont(juce::Font(typeface).withHeight(15.5f));
-    //delayTimeLabel.setText("Delay Time Left", juce::dontSendNotification);
-    //delayTimeLabel.attachToComponent(&delayTimeSlider, true);
-    //delayTimeSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "Delay Time", delayTimeSlider);
-
-    feedbackSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    feedbackSlider.setTextValueSuffix("");
-    addAndMakeVisible(feedbackSlider);
-    addAndMakeVisible(feedbackLabel);
-    feedbackLabel.setFont(juce::Font(typeface).withHeight(15.5f));
-    feedbackLabel.setText("Feedback", juce::dontSendNotification);
-    feedbackLabel.attachToComponent(&feedbackSlider, true);
 
     delayTimeSliderRight.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     delayTimeSliderRight.setTextValueSuffix(" (ms)");
     addAndMakeVisible(delayTimeSliderRight);
-    //addAndMakeVisible(delayTimeLabelRight);
-    //delayTimeLabelRight.setFont(juce::Font(typeface).withHeight(15.5f));
-    //delayTimeLabelRight.setText("Delay Time Right", juce::dontSendNotification);
-    //delayTimeLabelRight.attachToComponent(&delayTimeSliderRight, true);
 
+    dryWetSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    dryWetSlider.setTextValueSuffix("");
+    addAndMakeVisible(dryWetSlider);
+
+    feedbackSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    feedbackSlider.setTextValueSuffix("");
+    addAndMakeVisible(feedbackSlider);
 
     setSize (650, 500);
     setResizable(true,false);
@@ -196,23 +185,25 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.setGradientFill(ColourGradient (Colour(23, 0, 62), 0.125f*(float) getWidth(), 0.125f*(float) getHeight(),
                                        Colour(0, 0, 0), 0.875f*(float) getWidth(), 0.875f*(float) getHeight(), true));
     g.fillAll();
-
-    // auto bounds = getLocalBounds();
-    // auto center = bounds.getCentre();
     
     g.setColour (juce::Colours::white);
     g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
 
     auto bounds = getLocalBounds();
     bounds = bounds.removeFromTop(JUCE_LIVE_CONSTANT(100));
-    auto left = bounds.removeFromLeft(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.4275f));
-    auto right = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.75f));
+    auto topleft = bounds.removeFromLeft(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.4275f));
+    auto topright = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(0.75f));
+    auto bottom = getLocalBounds();
+    bottom = bottom.removeFromBottom(JUCE_LIVE_CONSTANT(100));
+    auto bottomleft = bottom.removeFromLeft(bottom.getWidth() * JUCE_LIVE_CONSTANT(0.5f));
+    auto bottomright = bottom.removeFromRight(bottom.getWidth() * JUCE_LIVE_CONSTANT(1.f));
 
-    g.drawFittedText("Delay Time Left", left, juce::Justification::centred, 1);
-    g.drawFittedText("Delay Time Right", right, juce::Justification::centred, 1);
+    g.drawFittedText("Delay Time Left", topleft, juce::Justification::centred, 1);
+    g.drawFittedText("Delay Time Right", topright, juce::Justification::centred, 1);
+    g.drawFittedText("Feedbaack", bottomleft, juce::Justification::centred, 1);
+    g.drawFittedText("Dry / Wet", bottomright, juce::Justification::centred, 1);
 
-//     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
+    // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
     // g.setColour (juce::Colours::white);
     // g.setFont (15.0f);
     // g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
@@ -226,15 +217,14 @@ void DelayAudioProcessorEditor::resized()
     bounds = bounds.reduced(JUCE_LIVE_CONSTANT(50));
     //bounds.removeFromTop(bounds.getHeight() * 0.5f);
 
-
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
     auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
+    auto feedbackArea = delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f));
 
     delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.33f)));
     delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.5f)));
-    feedbackSlider.setBounds(delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.33f)));
-    //delayTimeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 100, 50);
-    //delayTimeSlider.setBounds(getWidth() / 2 - 50, getHeight() / 2 - 50, 500, 75);
+    feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
+    dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
 }
 
 
@@ -244,6 +234,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
   {
     &delayTimeSliderLeft,
     &delayTimeSliderRight,
-    &feedbackSlider
+    &feedbackSlider,
+    &dryWetSlider
   };
 }

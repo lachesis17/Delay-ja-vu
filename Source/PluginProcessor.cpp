@@ -103,14 +103,14 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     leftChain.prepare(spec);
     rightChain.prepare(spec);
 
-    coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect
+    coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect : one-pole filter
 
     auto chainsettings = getChainSettings(apvts);
     delayTimeLeft = chainsettings.delayTimeLeft;
     delayTimeRight = chainsettings.delayTimeRight;
-    smoothedDelayTimeLeft.reset(sampleRate, 0.05);
-    smoothedDelayTimeRight.reset(sampleRate, 0.05);
-    smoothedFeedback.reset(sampleRate, 0.05);
+    smoothedDelayTimeLeft.reset(sampleRate, 0.05f);
+    smoothedDelayTimeRight.reset(sampleRate, 0.05f);
+    smoothedFeedback.reset(sampleRate, 0.05f);
 }
 
 
@@ -156,7 +156,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     const int numSamples = buffer.getNumSamples();
 
     auto chainsettings = getChainSettings(apvts);
-    feedbackTime = chainsettings.feedbackTime;
+    float feedbackTime = chainsettings.feedbackTime;
+    float dryWet = chainsettings.dryWet;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = chainsettings.delayTimeRight;
 
@@ -182,12 +183,12 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 int readIndexLeft = (writeIndexLeft - int(delayTimeLeft * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferLeft[readIndexLeft];
                 circularBufferLeft[writeIndexLeft] = inData[sample] + feedbackTime * delayedSample;
-                outData[sample] = delayedSample;
+                //outData[sample] = delayedSample;
+                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // dry / wet
                 writeIndexLeft = (writeIndexLeft + 1) % maxBufferSize;
             }
             else if (channel == 1)
             {
-
                 smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
                 smoothedFeedback.setTargetValue(feedbackTime);
 
@@ -200,7 +201,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 int readIndexRight = (writeIndexRight - int(delayTimeRight * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferRight[readIndexRight];
                 circularBufferRight[writeIndexRight] = inData[sample] + feedbackTime * delayedSample;
-                outData[sample] = delayedSample;
+                //outData[sample] = delayedSample;
+                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample;
                 writeIndexRight = (writeIndexRight + 1) % maxBufferSize;
             }
         }
@@ -236,12 +238,19 @@ void DelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream mos(destData, true);
+    apvts.state.writeToStream(mos);
 }
 
 void DelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid())
+    {
+        apvts.replaceState(tree);
+    }
 }
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
@@ -250,6 +259,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.delayTimeLeft = apvts.getRawParameterValue("Delay Left")->load();
     settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
     settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
+    settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
 
     return settings;
 }
@@ -269,6 +279,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Left", "Delay Left", 1, 1500, 320));
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 1, 1500, 320));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 0.98f, 0.01f, 1.f), 0.25f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
 
     return { params.begin(), params.end() };
 }

@@ -92,7 +92,8 @@ private:
     RotarySliderWithLabels
     delayTimeSliderLeft,
     delayTimeSliderRight,
-    feedbackSlider;
+    feedbackSlider,
+    dryWetSlider;
 
     using APVTS = juce::AudioProcessorValueTreeState;
     using Attachment = APVTS::SliderAttachment;
@@ -100,15 +101,14 @@ private:
     Attachment
     delayTimeSliderAttachmentLeft,
     delayTimeSliderAttachmentRight,
-    feedbackSliderAttachment;
+    feedbackSliderAttachment,
+    dryWetSliderAttachment;
 
     std::vector<juce::Component*> getComps();
 
     //juce::Slider delayTimeSlider;
     //std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> delayTimeSliderAttachment;
-    juce::Label delayTimeLabelLeft;
-    juce::Label delayTimeLabelRight;
-    juce::Label feedbackLabel;
+    //juce::Label delayTimeLabelLeft;
 
     RotaryLookAndFeel lnf;
 
