@@ -20,10 +20,10 @@ struct RotaryLookAndFeel : juce::LookAndFeel_V4
                         float rotaryEndAngle,
                         juce::Slider&) override;
 
-    // void drawToggleButton (juce::Graphics &g, // line 119
-    //                     juce::ToggleButton &toggleButton, 
-    //                     bool shouldDrawButtonAsHighlighted, 
-    //                     bool shouldDrawButtonAsDown) override;
+    void drawToggleButton (juce::Graphics &g, // line 119
+                        juce::ToggleButton &toggleButton, 
+                        bool shouldDrawButtonAsHighlighted, 
+                        bool shouldDrawButtonAsDown) override;
 
     //Font getLabelFont (Label&) override;
     
@@ -68,6 +68,8 @@ private:
   juce::String suffix;
 };
 
+struct EnableButton : juce::ToggleButton {};
+
 //==============================================================================
 /**
 */
@@ -104,9 +106,15 @@ private:
     feedbackSliderAttachment,
     dryWetSliderAttachment;
 
+    using ButtonAttachment = APVTS::ButtonAttachment;
+    EnableButton dualDelayButton;
+    ButtonAttachment dualDelayButtonAttachment;
+
     std::vector<juce::Component*> getComps();
 
-    //juce::Slider delayTimeSlider;
+    //juce::Image background; // just used for drawing bbox rects for ui layout
+
+    //juce::Slider delayTimeSlider; // add comps without subclass or lookandfeel
     //std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> delayTimeSliderAttachment;
     //juce::Label delayTimeLabelLeft;
 

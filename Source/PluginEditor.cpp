@@ -68,6 +68,44 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     }
 }
 
+void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
+                        juce::ToggleButton &toggleButton, 
+                        bool shouldDrawButtonAsHighlighted, 
+                        bool shouldDrawButtonAsDown)
+{
+    using namespace juce;
+
+    // if (auto *pb = dynamic_cast<EnableButton*>(&toggleButton)) // if you can cast one of the widgets to this class, do this
+    // {
+        Path powerButton;
+
+        auto bounds = toggleButton.getLocalBounds();
+        // g.setColour(Colours::yellow);
+        // g.drawRect(bounds);
+        
+        bool scale = bounds.getWidth() > bounds.getHeight();
+        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.05f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.1f); // toggle button size
+        auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+
+        float ang = 25.f;
+
+        size -= 7;
+
+        powerButton.addCentredArc(r.getCentreX(), r.getCentreY(), size * 0.5, size * 0.5, 0.f, degreesToRadians(ang), degreesToRadians(360.f - ang), true);
+
+        powerButton.startNewSubPath(r.getCentreX(), r.getY());
+        powerButton.lineTo(r.getCentre());
+
+        PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
+
+        auto color = toggleButton.getToggleState() ? Colours::dimgrey : Colour(63u, 72u, 204u);
+
+        g.setColour(color);
+        g.strokePath(powerButton, pst);
+        g.drawEllipse(r, 2);
+    //}
+}
+
 void RotarySliderWithLabels::paint(juce::Graphics &g)
 {
     using namespace juce;
@@ -86,7 +124,6 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
 
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), 
     jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAng, endAng, *this);
-
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
@@ -147,23 +184,34 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     feedbackSlider(*audioProcessor.apvts.getParameter("Feedback"), ""),
     feedbackSliderAttachment(audioProcessor.apvts, "Feedback", feedbackSlider),
     dryWetSlider(*audioProcessor.apvts.getParameter("Dry Wet"), ""),
-    dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider)
+    dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider),
+
+    dualDelayButtonAttachment(audioProcessor.apvts, "Dual Delay", dualDelayButton)
 {
-    delayTimeSliderLeft.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
-    addAndMakeVisible(delayTimeSliderLeft);
-
-    delayTimeSliderRight.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     delayTimeSliderRight.setTextValueSuffix(" (ms)");
-    addAndMakeVisible(delayTimeSliderRight);
 
-    dryWetSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    dryWetSlider.setTextValueSuffix("");
-    addAndMakeVisible(dryWetSlider);
+    bool delayToggled = !dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
+    delayTimeSliderRight.setEnabled(delayToggled);
 
-    feedbackSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
-    feedbackSlider.setTextValueSuffix("");
-    addAndMakeVisible(feedbackSlider);
+    auto safePtr = juce::Component::SafePointer<DelayAudioProcessorEditor>(this);
+    dualDelayButton.onClick = [safePtr]()
+    {
+        if (auto *comp = safePtr.getComponent())
+        {
+            auto bypassed = comp->dualDelayButton.getToggleState();
+            
+            comp->delayTimeSliderRight.setEnabled(!bypassed);
+        }
+    };
+
+    for( auto* comp: getComps())
+    {
+        addAndMakeVisible(comp);
+    }
+
+    dualDelayButton.setLookAndFeel(&lnf);
 
     setSize (650, 500);
     setResizable(true,false);
@@ -175,6 +223,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
 
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 {
+    dualDelayButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -191,6 +240,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     juce::Rectangle<int> delayTimeSliderRightBounds = delayTimeSliderRight.getBounds();
     juce::Rectangle<int> feedbackSliderBounds = feedbackSlider.getBounds();
     juce::Rectangle<int> dryWetBounds = dryWetSlider.getBounds();
+    juce::Rectangle<int> toggleButtonBounds = dualDelayButton.getBounds();
 
     float windowHeight = static_cast<float>(getHeight());
 
@@ -198,11 +248,13 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
     feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
     dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
+    toggleButtonBounds.setY(toggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
 
     g.drawFittedText("Delay Time Left", delayTimeSliderLeftBounds, juce::Justification::centred, 1);
     g.drawFittedText("Delay Time Right", delayTimeSliderRightBounds, juce::Justification::centred, 1);
     g.drawFittedText("Feedback", feedbackSliderBounds, juce::Justification::centred, 1);
     g.drawFittedText("Dry / Wet", dryWetBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Single / Dual", toggleButtonBounds, juce::Justification::centred, 1);
 }
 
 void DelayAudioProcessorEditor::resized()
@@ -210,14 +262,29 @@ void DelayAudioProcessorEditor::resized()
     auto bounds = getLocalBounds();
     bounds = bounds.reduced(JUCE_LIVE_CONSTANT(50));
 
+    // background = juce::Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
+    // juce::Graphics g(background);
+    // g.setColour(juce::Colours::red);
+    // g.drawRect(bounds); // just used for drawing bbox rects for ui layout
+
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
     auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
     auto feedbackArea = delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f));
+    auto toggleArea = getLocalBounds();
+
+    float windowHeight = static_cast<float>(getHeight());
+    float windowWidth = static_cast<float>(getWidth());
+
+    toggleArea.setWidth(JUCE_LIVE_CONSTANT(70));
+    toggleArea.setX(getLocalBounds().getCentreX() - JUCE_LIVE_CONSTANT(35));
+    toggleArea.setY(toggleArea.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.15f));
 
     delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.33f)));
     delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.5f)));
     feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
     dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
+
+    dualDelayButton.setBounds(toggleArea.removeFromRight(toggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
 }
 
 
@@ -228,6 +295,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &delayTimeSliderLeft,
     &delayTimeSliderRight,
     &feedbackSlider,
-    &dryWetSlider
+    &dryWetSlider,
+    &dualDelayButton
   };
 }

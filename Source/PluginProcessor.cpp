@@ -153,6 +153,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     float dryWet = chainsettings.dryWet;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = chainsettings.delayTimeRight;
+    bool dualDelay = chainsettings.dualDelay;
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
@@ -167,29 +168,33 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
                 delayTimeLeft = smoothedDelayTimeLeft.getNextValue();
 
-                delayTimeLeft += (smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff;
-                //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
+                delayTimeLeft += (smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff;    //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
 
                 int readIndexLeft = (writeIndexLeft - int(delayTimeLeft * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferLeft[readIndexLeft];
                 circularBufferLeft[writeIndexLeft] = inData[sample] + feedbackTime * delayedSample;
-                //outData[sample] = delayedSample; // 100% wet
-                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // dry / wet
+                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample;    // dry / wet   //outData[sample] = delayedSample; // 100% wet
                 writeIndexLeft = (writeIndexLeft + 1) % maxBufferSize;
             }
             else if (channel == 1) // right channel
             {
-                smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
-                delayTimeRight = smoothedDelayTimeRight.getNextValue();
-
-                delayTimeRight += (smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff;
-                //delayTimeRight += (newDelayTimeRight - delayTimeRight) * coeff; // non-smoothed, apply one-pole filter
+                if (dualDelay)
+                {
+                    smoothedDelayTimeRight.setTargetValue(newDelayTimeLeft);
+                    delayTimeRight = smoothedDelayTimeLeft.getNextValue();
+                    delayTimeRight += (smoothedDelayTimeLeft.getNextValue() - delayTimeRight) * coeff;
+                }
+                else
+                {
+                    smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
+                    delayTimeRight = smoothedDelayTimeRight.getNextValue();
+                    delayTimeRight += (smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff;
+                }
 
                 int readIndexRight = (writeIndexRight - int(delayTimeRight * getSampleRate() / 1000) + maxBufferSize) % maxBufferSize;
                 float delayedSample = circularBufferRight[readIndexRight];
                 circularBufferRight[writeIndexRight] = inData[sample] + feedbackTime * delayedSample;
-                //outData[sample] = delayedSample; // 100% wet
-                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // dry / wet
+                outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample;
                 writeIndexRight = (writeIndexRight + 1) % maxBufferSize;
             }
         }
@@ -247,6 +252,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
     settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
     settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
+    settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
 
     return settings;
 }
@@ -267,6 +273,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 1, 1500, 320));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 0.98f, 0.01f, 1.f), 0.25f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", false));
 
     return { params.begin(), params.end() };
 }

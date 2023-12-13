@@ -15,6 +15,7 @@ struct ChainSettings {
   float delayTimeRight {0};
   float feedbackTime {0};
   float dryWet {0};
+  bool dualDelay {false};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
