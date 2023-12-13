@@ -259,8 +259,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 
 void DelayAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
-    bounds = bounds.reduced(JUCE_LIVE_CONSTANT(50));
+    auto bounds = getLocalBounds().reduced(JUCE_LIVE_CONSTANT(50));
 
     // background = juce::Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
     // juce::Graphics g(background);
@@ -270,13 +269,13 @@ void DelayAudioProcessorEditor::resized()
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
     auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
     auto feedbackArea = delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f));
-    auto toggleArea = getLocalBounds();
+    auto toggleArea = bounds;
 
     float windowHeight = static_cast<float>(getHeight());
     float windowWidth = static_cast<float>(getWidth());
 
-    toggleArea.setWidth(JUCE_LIVE_CONSTANT(70));
-    toggleArea.setX(getLocalBounds().getCentreX() - JUCE_LIVE_CONSTANT(35));
+    toggleArea.setWidth(windowWidth * 0.15);
+    toggleArea.setX(getLocalBounds().getCentreX() - toggleArea.getWidth() * 0.5f);
     toggleArea.setY(toggleArea.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.15f));
 
     delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.33f)));
