@@ -118,11 +118,12 @@ private:
 };
 
 struct ChainSettings {
-  float delayTimeLeft {0};
-  float delayTimeRight {0};
-  float feedbackTime {0};
-  float dryWet {0};
-  bool dualDelay {true};
+	float delayTimeLeft {0};
+	float delayTimeRight {0};
+	float feedbackTime {0};
+	float dryWet {0};
+	bool dualDelay {true};
+	bool chorus {false};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -184,22 +185,29 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
-    CircularBuffer<float> circBuffLeft;
-    CircularBuffer<float> circBuffRight;
+	void updateFilters(double sampleRate);
+	void applyChorus(int sample, bool left);
 
-    MonoChain leftChain, rightChain;
-    juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight;
+	MonoChain leftChain, rightChain;
+	juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight;
 
-    void updateFilters(double sampleRate);
+	CircularBuffer<float> circBuffLeft;
+	CircularBuffer<float> circBuffRight;
+	double currentSampleRate;
 
-    int writeIndexLeft = 0;
-    int writeIndexRight = 0;
-    float lastDelayTimeLeft = 100.0f;
-    float lastDelayTimeRight = 100.0f;
-    float coeff = 0;
-    float delayTimeLeft;
-    float delayTimeRight;
-    float feedbackTime;
+	int writeIndexLeft = 0;
+	int writeIndexRight = 0;
+	float lastDelayTimeLeft = 100.0f;
+	float lastDelayTimeRight = 100.0f;
+	float coeff = 0;
+	float delayTimeLeft;
+	float delayTimeRight;
+	float feedbackTime;
+
+	float chorusRate = 0.3f; 
+	float chorusDepth = 5.0f;
+	float chorusPhase = 0.0f;
+	float chorusModulation = 0.0f;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)

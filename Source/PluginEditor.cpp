@@ -84,7 +84,7 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
         // g.drawRect(bounds);
         
         bool scale = bounds.getWidth() > bounds.getHeight();
-        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.05f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.1f); // toggle button size
+        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.25f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
         auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
 
         float ang = 25.f;
@@ -186,7 +186,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dryWetSlider(*audioProcessor.apvts.getParameter("Dry Wet"), ""),
     dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider),
 
-    dualDelayButtonAttachment(audioProcessor.apvts, "Dual Delay", dualDelayButton)
+    dualDelayButtonAttachment(audioProcessor.apvts, "Dual Delay", dualDelayButton),
+    chorusButtonAttachment(audioProcessor.apvts, "Chorus", chorusButton)
 {
 
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
@@ -212,6 +213,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     }
 
     dualDelayButton.setLookAndFeel(&lnf);
+    chorusButton.setLookAndFeel(&lnf);
 
     setSize (650, 500);
     setResizable(true,false);
@@ -240,7 +242,11 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     juce::Rectangle<int> delayTimeSliderRightBounds = delayTimeSliderRight.getBounds();
     juce::Rectangle<int> feedbackSliderBounds = feedbackSlider.getBounds();
     juce::Rectangle<int> dryWetBounds = dryWetSlider.getBounds();
-    juce::Rectangle<int> toggleButtonBounds = dualDelayButton.getBounds();
+    juce::Rectangle<int> delayToggleButtonBounds = dualDelayButton.getBounds();
+    juce::Rectangle<int> chorusToggleButtonBounds = chorusButton.getBounds();
+
+    // g.setColour(juce::Colours::red);
+    // g.drawRect(delayToggleButtonBounds); // just used for drawing bbox rects for ui layout
 
     float windowHeight = static_cast<float>(getHeight());
 
@@ -248,23 +254,20 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
     feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
     dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
-    toggleButtonBounds.setY(toggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
+    delayToggleButtonBounds.setY(delayToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
+    chorusToggleButtonBounds.setY(chorusToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
 
     g.drawFittedText("Delay Time Left", delayTimeSliderLeftBounds, juce::Justification::centred, 1);
     g.drawFittedText("Delay Time Right", delayTimeSliderRightBounds, juce::Justification::centred, 1);
     g.drawFittedText("Feedback", feedbackSliderBounds, juce::Justification::centred, 1);
     g.drawFittedText("Dry / Wet", dryWetBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Single / Dual", toggleButtonBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Single / Dual", delayToggleButtonBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Chorus", chorusToggleButtonBounds, juce::Justification::centred, 1);
 }
 
 void DelayAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(JUCE_LIVE_CONSTANT(50));
-
-    // background = juce::Image(Image::PixelFormat::RGB, getWidth(), getHeight(), true);
-    // juce::Graphics g(background);
-    // g.setColour(juce::Colours::red);
-    // g.drawRect(bounds); // just used for drawing bbox rects for ui layout
 
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
     auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
@@ -276,14 +279,20 @@ void DelayAudioProcessorEditor::resized()
 
     toggleArea.setWidth(windowWidth * 0.15);
     toggleArea.setX(getLocalBounds().getCentreX() - toggleArea.getWidth() * 0.5f);
-    toggleArea.setY(toggleArea.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.15f));
+    auto delayToggleArea = toggleArea;
+    auto chorusToggleArea = toggleArea;
+    delayToggleArea.setHeight(windowHeight * JUCE_LIVE_CONSTANT(0.2f));
+    chorusToggleArea.setHeight(windowHeight * JUCE_LIVE_CONSTANT(0.2f));
+    delayToggleArea.setY(delayToggleArea.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
+    chorusToggleArea.setY(chorusToggleArea.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.5f));
 
     delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.33f)));
     delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.5f)));
     feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
     dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
 
-    dualDelayButton.setBounds(toggleArea.removeFromRight(toggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
+    dualDelayButton.setBounds(delayToggleArea.removeFromRight(delayToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
+    chorusButton.setBounds(chorusToggleArea.removeFromRight(chorusToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
 }
 
 
@@ -295,6 +304,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &delayTimeSliderRight,
     &feedbackSlider,
     &dryWetSlider,
-    &dualDelayButton
+    &dualDelayButton,
+    &chorusButton
   };
 }
