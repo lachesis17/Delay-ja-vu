@@ -204,12 +204,12 @@ private:
 	float delayTimeRight;
 	float feedbackTime;
 
-	float chorusRate = 0.3f; 
-	float chorusDepth = 5.0f;
-	float chorusPhase = 0.0f;
-	float chorusModulation = 0.0f;
+	float chorusRate = 0.2f; 
+	float chorusDepth = 2.f;
+	float chorusPhase = 0.f;
+	float chorusModulation = 0.f;
 
-	float randomMod = 0.0f;
+	//float randomMod = 0.f;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)

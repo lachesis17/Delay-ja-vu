@@ -181,8 +181,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
                 circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;  // making this to control the volume changes when mixing dry/wet signals
-                outData[sample] = wetScale * inData[sample] + dryWet * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet
-                // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
+                outData[sample] = wetScale * inData[sample] + dryWet * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 writeIndexLeft = (writeIndexLeft + 1) % circBuffLeft.getBufferLength();
             }
             else if (channel == 1) // right channel
@@ -198,7 +197,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;
                 outData[sample] = wetScale * inData[sample] + dryWet * delayedSample; 
-                // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 writeIndexRight = (writeIndexRight + 1) % circBuffRight.getBufferLength();
             }
         }
@@ -264,9 +262,9 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
 
 void DelayAudioProcessor::applyChorus(int sample, bool left)
 {
-    //chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
-    randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor
-    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
+    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
+    // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor
+    // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
     left ? delayTimeLeft += chorusModulation : delayTimeRight += chorusModulation;
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
 }
