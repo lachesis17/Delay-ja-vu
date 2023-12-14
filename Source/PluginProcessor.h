@@ -209,6 +209,8 @@ private:
 	float chorusPhase = 0.0f;
 	float chorusModulation = 0.0f;
 
+	float randomMod = 0.0f;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };
