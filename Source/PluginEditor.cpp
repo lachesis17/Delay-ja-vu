@@ -84,7 +84,7 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
         // g.drawRect(bounds);
         
         bool scale = bounds.getWidth() > bounds.getHeight();
-        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.25f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
+        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.33f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.33f); // toggle button size
         auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
 
         float ang = 25.f;
@@ -215,12 +215,12 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dualDelayButton.setLookAndFeel(&lnf);
     chorusButton.setLookAndFeel(&lnf);
 
-    setSize (650, 500);
-    setResizable(true,false);
-    // juce::Rectangle<int> r = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
-    // int x = r.getWidth();
-    // int y = r.getHeight();
-    // setResizeLimits(50, 0, x, y);
+    setSize (700, 500);
+    setResizable(true,true);
+    juce::Rectangle<int> r = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
+    int x = r.getWidth();
+    int y = r.getHeight();
+    setResizeLimits(420, 300, x, y);
 }
 
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
@@ -252,8 +252,8 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 
     delayTimeSliderLeftBounds.setY(delayTimeSliderLeftBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
     delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
-    feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
-    dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.125f));
+    feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
+    dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
     delayToggleButtonBounds.setY(delayToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
     chorusToggleButtonBounds.setY(chorusToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
 
@@ -293,6 +293,9 @@ void DelayAudioProcessorEditor::resized()
 
     dualDelayButton.setBounds(delayToggleArea.removeFromRight(delayToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
     chorusButton.setBounds(chorusToggleArea.removeFromRight(chorusToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
+
+    // audioProcessor.apvts.state.setProperty("EditorWidth", getWidth(), nullptr); // use this later to set sizes
+    // audioProcessor.apvts.state.setProperty("EditorHeight", getHeight(), nullptr);
 }
 
 

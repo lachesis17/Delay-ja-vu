@@ -233,6 +233,7 @@ void DelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    //auto editor = apvts.state.getOrCreateChildWithName ("editor", nullptr);
     juce::MemoryOutputStream mos(destData, true);
     apvts.state.writeToStream(mos);
 }
