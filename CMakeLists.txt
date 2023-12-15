@@ -18,6 +18,11 @@ FetchContent_MakeAvailable(JUCE)
 
 set(FORMATS "VST3" "Standalone")
 
+# Enable logging for debug builds
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_definitions(-DENABLE_LOGGING)
+endif()
+
 juce_add_plugin(Delay
         VERSION 1.0.0
         COMPANY_NAME lachesis

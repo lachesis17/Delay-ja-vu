@@ -113,7 +113,7 @@ private:
 	std::unique_ptr<T[]> buffer = nullptr;	///< smart pointer will auto-delete
 	unsigned int writeIndex = 0;		///> write index
 	unsigned int bufferLength = 1024;	///< must be nearest power of 2
-	unsigned int wrapMask = 1023;		///< must be (bufferLength - 1)
+	unsigned int wrapMask = bufferLength - 1;		///< must be (bufferLength - 1)
 	bool interpolate = true;			///< interpolation (default is ON)
 };
 
@@ -185,7 +185,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 private:
-	void updateFilters(double sampleRate);
+	void updateFilters();
 	void applyChorus(int sample, bool left);
 
 	MonoChain leftChain, rightChain;
@@ -205,11 +205,9 @@ private:
 	float feedbackTime;
 
 	float chorusRate = 0.2f; 
-	float chorusDepth = 2.f;
+	float chorusDepth = 1.f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
-
-	//float randomMod = 0.f;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)

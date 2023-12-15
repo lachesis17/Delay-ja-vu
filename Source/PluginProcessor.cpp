@@ -26,6 +26,9 @@ DelayAudioProcessor::DelayAudioProcessor()
 
 DelayAudioProcessor::~DelayAudioProcessor()
 {
+    // juce::File Log("build/Delay_artefacts/Debug/Standalone/feedback.txt"); // log making
+    // juce::FileLogger Logger(feedbackLog, "Log Message");
+    // Logger.logMessage("Value: " + juce::String(delayTimeLeft));
 }
 
 //==============================================================================
@@ -98,15 +101,15 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     leftChain.prepare(spec);
     rightChain.prepare(spec);
 
-    coeff = 1.0f - std::exp( -1.0f / (0.05f * sampleRate)); // tape delay effect : one-pole filter
-
-    smoothedDelayTimeLeft.reset(sampleRate, 0.05f);
-    smoothedDelayTimeRight.reset(sampleRate, 0.05f);
-
     currentSampleRate = getSampleRate();
 
-    circBuffLeft.createCircularBuffer(currentSampleRate);
-    circBuffRight.createCircularBuffer(currentSampleRate);
+    coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate)); // tape delay effect : one-pole filter
+
+    smoothedDelayTimeLeft.reset(currentSampleRate, 0.3f);
+    smoothedDelayTimeRight.reset(currentSampleRate, 0.3f);
+
+    circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
+    circBuffRight.createCircularBuffer(2 * currentSampleRate);
     circBuffLeft.flushBuffer();
     circBuffRight.flushBuffer();
 }
@@ -172,10 +175,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             if (channel == 0) // left channel
             {
                 smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
-                delayTimeLeft = smoothedDelayTimeLeft.getNextValue();
-                delayTimeLeft += (smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff;  //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
+                delayTimeLeft = smoothedDelayTimeLeft.getNextValue() + ((smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff); //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
 
-                if (chorus)
+                if (chorus && (delayTimeLeft != 0.0f))
                     applyChorus(sample, true);
 
                 float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
@@ -187,10 +189,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             else if (channel == 1) // right channel
             {
                 smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
-                delayTimeRight = smoothedDelayTimeRight.getNextValue();
-                delayTimeRight += (smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff;
+                delayTimeRight = smoothedDelayTimeRight.getNextValue() + ((smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff);
 
-                if (chorus)
+                if (chorus && (delayTimeRight != 0.0f))
                     applyChorus(sample, false);
 
                 float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
@@ -262,18 +263,16 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
 
 void DelayAudioProcessor::applyChorus(int sample, bool left)
 {
-    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
-    // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor
-    // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
-    left ? delayTimeLeft += chorusModulation : delayTimeRight += chorusModulation;
+    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);    //float randomMod = 0.f;      // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor
+    left ? delayTimeLeft += chorusModulation : delayTimeRight += chorusModulation;        // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
 }
 
-void DelayAudioProcessor::updateFilters(double sampleRate)
+void DelayAudioProcessor::updateFilters()
 {
     auto chainSettings = getChainSettings(apvts);
 
-    //auto delaySamples = (chainSettings.delayTime * sampleRate);
+    // reserved for low and high pass
 }
 
 
@@ -281,9 +280,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Left", "Delay Left", 1, 1500, 320));
-    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 1, 1500, 320));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 0.98f, 0.01f, 1.f), 0.25f));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Left", "Delay Left", 0, 2000, 320));
+    params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 0, 2000, 320));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 1.f, 0.01f, 1.f), 0.25f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", true));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
