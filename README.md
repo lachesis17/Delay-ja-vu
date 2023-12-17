@@ -8,6 +8,7 @@ https://github.com/lachesis17/Delay-Plugin/assets/78860436/73d1620a-d4ce-4d7f-96
 - [x] 2000ms max
 - [x] Stereo toggle
 - [x] Chorus toggle
+- [ ] Add graphic of line drawing outside slider for value
 - [ ] 'Freeze' mode with feedback & dry/wet @ 1.0f (works, add to toggle)
 - [ ] Lowpass / Highpass
 - [ ] Fix popping on toggling states & warping speeds (tukey window)
