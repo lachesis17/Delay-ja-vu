@@ -206,8 +206,8 @@ private:
 	float feedbackTime;
 	float dryWet;
 
-	float chorusRate = 0.2f; 
-	float chorusDepth = 1.f;
+	float chorusRate = 0.25f; 
+	float chorusDepth = 0.75f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
 
