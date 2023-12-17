@@ -27,7 +27,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     g.fillEllipse(bounds);
 
     g.setColour(enabled ? Colour(250u, 250u, 250u) : Colour(Colours::black));
-    g.drawEllipse(bounds, 1.f);    
+    g.drawEllipse(bounds, 2.5f);    
 
     if(auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
@@ -35,8 +35,8 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
         Path p;
 
         Rectangle<float> r;
-        r.setLeft(center.getX() - 2.5);
-        r.setRight(center.getX() + 2.5);
+        r.setLeft(center.getX() - 3.5f);
+        r.setRight(center.getX() + 3.5f);
         r.setTop(bounds.getY());
         r.setBottom(center.getY() - rswl->getTextHeight() * 1.5);
 
