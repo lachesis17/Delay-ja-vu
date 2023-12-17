@@ -6,8 +6,8 @@
                 "${workspaceFolder}/**",
                 "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE",
                 "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE\\modules\\",
-                "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE-Plugins\blank",
-                "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE-Plugins\blank\\JuceLibraryCode"
+                "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE-Plugins\\Delay-Plugin",
+                "D:\\Desktop\\odin-projects\\cpp_juce\\JUCE-Plugins\\Delay-Plugin\\JuceLibraryCode"
             ],
             "defines": [
                 "_DEBUG",

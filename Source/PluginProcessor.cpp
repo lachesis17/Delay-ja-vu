@@ -104,9 +104,12 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     currentSampleRate = getSampleRate();
 
     coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate)); // tape delay effect : one-pole filter
+    coeff_sml = 1.0f - std::exp( -1.0f / (0.01f * currentSampleRate));
 
-    smoothedDelayTimeLeft.reset(currentSampleRate, 0.3f);
-    smoothedDelayTimeRight.reset(currentSampleRate, 0.3f);
+    smoothedDelayTimeLeft.reset(currentSampleRate, 0.77f);
+    smoothedDelayTimeRight.reset(currentSampleRate, 0.77f);
+    smoothedFeedback.reset(currentSampleRate, 0.005);
+    smoothedDryWet.reset(currentSampleRate, 0.005);
 
     circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
     circBuffRight.createCircularBuffer(2 * currentSampleRate);
@@ -157,12 +160,17 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     const int numSamples = buffer.getNumSamples();
 
     auto chainsettings = getChainSettings(apvts);
-    float feedbackTime = chainsettings.feedbackTime;
-    float dryWet = chainsettings.dryWet;
+    float newFeedbackTime = chainsettings.feedbackTime;
+    float newDryWet = chainsettings.dryWet;
     bool dualDelay = chainsettings.dualDelay;
     bool chorus = chainsettings.chorus;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
+
+    smoothedFeedback.setTargetValue(newFeedbackTime);
+    feedbackTime = smoothedFeedback.getNextValue() + ((smoothedFeedback.getNextValue() - feedbackTime) * coeff_sml); 
+    smoothedDryWet.setTargetValue(newDryWet);
+    dryWet = smoothedDryWet.getNextValue() + ((smoothedDryWet.getNextValue() - dryWet) * coeff_sml); 
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
