@@ -5,11 +5,17 @@ https://github.com/lachesis17/Delay-Plugin/assets/78860436/73d1620a-d4ce-4d7f-96
 
 ### Features
 
-- [ ] Ping Pong
+- [x] 2000ms max
+- [x] Stereo toggle
+- [x] Chorus toggle
+- [ ] 'Freeze' mode with feedback & dry/wet @ 1.0f (works, add to toggle)
 - [ ] Lowpass / Highpass
+- [ ] Fix popping on toggling states & warping speeds (tukey window)
+- [ ] Ping Pong
 - [ ] Sync BPM
-- [ ] Add BPM divisions (quarter, half etc.)
+- [ ] Add BPM divisions to time sliders (quarter, half etc.), needs to toggle with sync bpm state
 - [ ] Save presets with combo box
+- [ ] Save width/height
 - [ ] Tap
 - [ ] Diffusion
 - [ ] Reverb
