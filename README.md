@@ -16,7 +16,7 @@ https://github.com/lachesis17/Delay-Plugin/assets/78860436/73d1620a-d4ce-4d7f-96
 - [ ] Sync BPM
 - [ ] Add BPM divisions to time sliders (quarter, half etc.), needs to toggle with sync bpm state
 - [ ] Save presets with combo box
-- [ ] Save width/height
+- [ ] Save width/height (ApplicationProperties)
 - [ ] Tap
 - [ ] Diffusion
 - [ ] Reverb
