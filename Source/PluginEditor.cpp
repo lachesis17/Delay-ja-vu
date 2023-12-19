@@ -215,7 +215,10 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dualDelayButton.setLookAndFeel(&lnf);
     chorusButton.setLookAndFeel(&lnf);
 
-    setSize (700, 500);
+    int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 700);
+    int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 500);
+
+    setSize(width, height);
     setResizable(true,true);
     juce::Rectangle<int> r = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
     int x = r.getWidth();
@@ -294,8 +297,10 @@ void DelayAudioProcessorEditor::resized()
     dualDelayButton.setBounds(delayToggleArea.removeFromRight(delayToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
     chorusButton.setBounds(chorusToggleArea.removeFromRight(chorusToggleArea.getWidth() * JUCE_LIVE_CONSTANT(1.f)));
 
-    // audioProcessor.apvts.state.setProperty("EditorWidth", getWidth(), nullptr); // use this later to set sizes
-    // audioProcessor.apvts.state.setProperty("EditorHeight", getHeight(), nullptr);
+    int width = getWidth();
+    int height = getHeight();
+    audioProcessor.getAppProperties().getUserSettings()->setValue("WindowWidth", width);
+    audioProcessor.getAppProperties().getUserSettings()->setValue("WindowHeight", height);
 }
 
 

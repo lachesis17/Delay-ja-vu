@@ -22,6 +22,10 @@ DelayAudioProcessor::DelayAudioProcessor()
                        ), apvts (*this, nullptr, "Parameters", createParameters())
 #endif
 {
+    PropertiesFile::Options options;
+    options.applicationName = "Delay-Plugin";
+    options.folderName = "lachesis17";
+    appProperties.setStorageParameters(options);
 }
 
 DelayAudioProcessor::~DelayAudioProcessor()

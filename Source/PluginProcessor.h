@@ -184,7 +184,11 @@ public:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     juce::AudioProcessorValueTreeState apvts;
 
+	ApplicationProperties& getAppProperties() { return appProperties; }
+
 private:
+	ApplicationProperties appProperties;
+
 	void updateFilters();
 	void applyChorus(int sample, bool left);
 
