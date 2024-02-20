@@ -15,6 +15,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     using namespace juce;
 
     auto bounds = Rectangle<float>(x, y, width, height);
+    bounds = bounds * JUCE_LIVE_CONSTANT(0.95); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
 
     auto enabled = slider.isEnabled();
 
@@ -24,10 +25,27 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
                     : 
                     ColourGradient (Colour(Colours::lightgrey), 0.175*(float) width, 0.175*(float) height,
                     Colour(Colours::darkgrey), 0.75*(float) width, 0.75*(float) height, true) );
-    g.fillEllipse(bounds);
+    g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)));
 
+    auto endValueAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc
+    auto valueLineWidth = jmin(4.0f, width * 0.05f);
+    auto valueArcOuterRadius = (width * 0.5f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9); // value arc outside slider bounds, bigger than half the width
+
+    Path backgroundArc;
+    backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getCentreY(), valueArcOuterRadius, valueArcOuterRadius,
+                                0.0f, rotaryStartAngle, rotaryEndAngle, true);
+    g.setColour(Colour(63u, 72u, 204u).withMultipliedAlpha(JUCE_LIVE_CONSTANT(0.35)));
+    g.strokePath(backgroundArc, PathStrokeType(valueLineWidth, PathStrokeType::curved));
+
+    Path valueArc;
+    valueArc.addCentredArc(bounds.getCentreX(), bounds.getCentreY(), valueArcOuterRadius, valueArcOuterRadius,
+                           0.0f, rotaryStartAngle, endValueAngle, true);
+    g.setColour(enabled ? Colour(250u, 250u, 250u) : Colours::grey);
+    g.strokePath(valueArc, PathStrokeType(valueLineWidth, PathStrokeType::curved));
+
+    
     g.setColour(enabled ? Colour(250u, 250u, 250u) : Colour(Colours::black));
-    g.drawEllipse(bounds, 2.5f);    
+    g.drawEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)), 2.5f); // white border for all the sliders
 
     if(auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
@@ -37,7 +55,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
         Rectangle<float> r;
         r.setLeft(center.getX() - 3.5f);
         r.setRight(center.getX() + 3.5f);
-        r.setTop(bounds.getY());
+        r.setTop(bounds.getY() * JUCE_LIVE_CONSTANT(9)); // adjust to set the value line to fit inside reduced bounds
         r.setBottom(center.getY() - rswl->getTextHeight() * 1.5);
 
         p.addRoundedRectangle(r, 2.f);
