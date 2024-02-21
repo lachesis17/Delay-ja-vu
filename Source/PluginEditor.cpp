@@ -9,7 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-void RotaryLookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPosProportional,
+void RotaryLookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float currentValue,
 float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
 {
     using namespace juce;
@@ -27,7 +27,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
                     Colour(Colours::darkgrey), 0.75*(float) width, 0.75*(float) height, true) );
     g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)));
 
-    auto endValueAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc
+    auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
     auto valueLineWidth = jmin(4.0f, width * 0.05f);
     auto valueArcOuterRadius = (width * 0.5f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9); // value arc outside slider bounds, bigger than half the width
 
@@ -61,7 +61,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
         p.addRoundedRectangle(r, 2.f);
         jassert(rotaryStartAngle < rotaryEndAngle);
 
-        auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+        auto sliderAngRad = jmap(currentValue, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
 
         p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
 
