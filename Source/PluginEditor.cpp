@@ -15,7 +15,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     using namespace juce;
 
     auto bounds = Rectangle<float>(x, y, width, height);
-    bounds = bounds * JUCE_LIVE_CONSTANT(0.95); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
+    bounds = bounds * JUCE_LIVE_CONSTANT(0.975); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
 
     auto enabled = slider.isEnabled();
 

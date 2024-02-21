@@ -1,0 +1,11 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="256px" height="256px" viewBox="0 0 32.00 32.00" xml:space="preserve" fill="#0a0c44" stroke="#0a0c44">
+
+<g id="SVGRepo_bgCarrier" stroke-width="0"/>
+
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.192"/>
+
+<g id="SVGRepo_iconCarrier"> <style type="text/css"> .puchipuchi_een{fill:#2b34b1;} </style> <path class="puchipuchi_een" d="M6.447,20.553L12,26h-2c-2.404,0-4.664-0.936-6.363-2.636C1.937,21.666,1,19.405,1,17 c0-2.404,0.936-4.664,2.636-6.363C5.336,8.937,7.596,8,10,8h3.344l-1.586-1.586c-0.781-0.781-0.781-2.047,0-2.828 s2.047-0.781,2.828,0L23,12H10c-1.336,0-2.591,0.521-3.536,1.465C5.52,14.409,5,15.664,5,17c0,1.326,0.515,2.571,1.445,3.512 C6.446,20.529,6.447,20.553,6.447,20.553z M28.363,8.636C26.664,6.936,24.404,6,22,6h-2l5.553,5.447c0,0,0.001,0.024,0.001,0.041 C26.485,12.429,27,13.674,27,15c0,1.336-0.52,2.591-1.464,3.535C24.591,19.479,23.336,20,22,20H9l8.413,8.414 c0.781,0.781,2.047,0.781,2.828,0s0.781-2.047,0-2.828L18.656,24H22c2.404,0,4.664-0.937,6.364-2.637C30.064,19.664,31,17.404,31,15 C31,12.595,30.063,10.334,28.363,8.636z"/> </g>
+
+</svg>

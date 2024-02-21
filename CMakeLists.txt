@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(JUCE_EQ_Plugin VERSION 1.0.0)
+project(Delay-ja-vu VERSION 1.0.0)
 
 #add_subdirectory(Ext/JUCE)
 
@@ -23,9 +23,9 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DENABLE_LOGGING)
 endif()
 
-juce_add_plugin(Delay
+juce_add_plugin(Delay-ja-vu
         VERSION 1.0.0
-        COMPANY_NAME lachesis
+        COMPANY_NAME lachesis17
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
         NEEDS_MIDI_OUTPUT FALSE
@@ -36,22 +36,22 @@ juce_add_plugin(Delay
         FORMATS ${FORMATS}
         VST3_CATEGORIES "Fx"
         #BUNDLE_ID ""
-        PLUGIN_NAME "Delay Plugin"
-        PRODUCT_NAME "Delay Plugin"
+        PLUGIN_NAME "Delay-ja-vu"
+        PRODUCT_NAME "Delay-ja-vu"
         ICON_BIG "Resources/icon.png"
         ICON_SMALL "Resources/icon.png"
         )
 
-target_compile_features(Delay PRIVATE cxx_std_17)
+target_compile_features(Delay-ja-vu PRIVATE cxx_std_17)
 
-juce_generate_juce_header(Delay)
+juce_generate_juce_header(Delay-ja-vu)
 
 juce_add_binary_data(BinaryData SOURCES
         Resources/Orbitron.ttf
         Resources/Monomaniac.ttf
 )
 
-target_sources(Delay
+target_sources(Delay-ja-vu
     PRIVATE
         Source/PluginEditor.cpp
         Source/PluginProcessor.cpp
@@ -62,13 +62,13 @@ target_sources(Delay
 
 #add_subdirectory(Sources)
 
-target_compile_definitions(Delay PUBLIC
+target_compile_definitions(Delay-ja-vu PUBLIC
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_DISPLAY_SPLASH_SCREEN=0) # very naughty
 
-target_link_libraries(Delay
+target_link_libraries(Delay-ja-vu
         PRIVATE
             # AudioPluginData           # If we'd created a binary data target, we'd link to it here
             BinaryData

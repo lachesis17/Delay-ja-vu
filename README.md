@@ -1,7 +1,6 @@
-# Delay-Plugin
-![Delay-Plugin](https://github.com/lachesis17/Delay-Plugin/assets/78860436/0b7dbd1e-908f-474e-bd5e-bd10b88657e5)
+# <img src="https://github.com/lachesis17/Delay-Plugin/assets/78860436/62340ccf-bfd4-40f3-a45f-291f1f91831e" width="30"> Delay-ja-vu
 
-https://github.com/lachesis17/Delay-Plugin/assets/78860436/73d1620a-d4ce-4d7f-96b0-c9b5b551236c
+[Delay-ja-vu](https://github.com/lachesis17/Delay-Plugin/assets/78860436/1cb21672-76cb-44dd-bc0c-63bd88fea59d)
 
 ### Features
 
