@@ -233,8 +233,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dualDelayButton.setLookAndFeel(&lnf);
     chorusButton.setLookAndFeel(&lnf);
 
-    int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 700);
-    int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 500);
+    int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 1300);
+    int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 575);
 
     setSize(width, height);
     setResizable(true,true);
