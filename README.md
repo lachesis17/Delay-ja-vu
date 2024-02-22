@@ -22,4 +22,4 @@
 - [ ] Tape decacy with drive/detune
 - [ ] Reverse (final boss)
 
-Copyright (c) 2023-2024, lachesis17 - All rights reserved.
+_Copyright (c) 2023-2024, lachesis17 - All rights reserved._
