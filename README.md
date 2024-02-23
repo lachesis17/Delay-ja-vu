@@ -9,7 +9,7 @@
 - [x] Chorus toggle
 - [x] Add graphic of line drawing outside slider for value
 - [ ] 'Freeze' mode with feedback & dry/wet @ 1.0f (works, add to toggle)
-- [ ] Lowpass / Highpass
+- [x] Lowpass / Highpass
 - [ ] Fix popping on toggling states & warping speeds (tukey window)
 - [ ] Ping Pong
 - [ ] Sync BPM

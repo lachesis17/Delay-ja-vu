@@ -124,6 +124,8 @@ struct ChainSettings {
 	float dryWet {0};
 	bool dualDelay {true};
 	bool chorus {false};
+	bool lowPass {false};
+	bool highPass {false};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -189,7 +191,6 @@ public:
 private:
 	ApplicationProperties appProperties;
 
-	void updateFilters();
 	void applyChorus(int sample, bool left);
 
 	MonoChain leftChain, rightChain;
@@ -198,6 +199,11 @@ private:
 	CircularBuffer<float> circBuffLeft;
 	CircularBuffer<float> circBuffRight;
 	double currentSampleRate;
+
+	juce::dsp::IIR::Filter<float> leftLowPass;
+	juce::dsp::IIR::Filter<float> rightLowPass;
+	juce::dsp::IIR::Filter<float> leftHighPass;
+	juce::dsp::IIR::Filter<float> rightHighPass;
 
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;

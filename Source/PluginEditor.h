@@ -107,8 +107,8 @@ private:
     dryWetSliderAttachment;
 
     using ButtonAttachment = APVTS::ButtonAttachment;
-    EnableButton dualDelayButton, chorusButton;
-    ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment;
+    EnableButton dualDelayButton, chorusButton, lowPassButton, highPassButton;
+    ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment, lowPassButtonAttachment, highPassButtonAttachment;
 
     std::vector<juce::Component*> getComps();
 

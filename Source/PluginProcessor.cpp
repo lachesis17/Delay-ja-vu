@@ -107,6 +107,19 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     currentSampleRate = getSampleRate();
 
+    leftLowPass.reset(); 
+    rightLowPass.reset();
+    leftHighPass.reset(); 
+    rightHighPass.reset();
+
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
+
+    leftLowPass.coefficients = coefficientsLow;
+    rightLowPass.coefficients = coefficientsLow;
+    leftHighPass.coefficients = coefficientsHigh;
+    rightHighPass.coefficients = coefficientsHigh;
+
     coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate)); // tape delay effect : one-pole filter
     coeff_sml = 1.0f - std::exp( -1.0f / (0.01f * currentSampleRate));
 
@@ -168,6 +181,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     float newDryWet = chainsettings.dryWet;
     bool dualDelay = chainsettings.dualDelay;
     bool chorus = chainsettings.chorus;
+    bool lowPass = chainsettings.lowPass;
+    bool highPass = chainsettings.highPass;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
 
@@ -193,6 +208,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                     applyChorus(sample, true);
 
                 float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
+
+                if (lowPass)
+                    delayedSample = leftLowPass.processSample(delayedSample);                
+
+                if (highPass)
+                    delayedSample = leftHighPass.processSample(delayedSample);
+
                 circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;  // making this to control the volume changes when mixing dry/wet signals
                 outData[sample] = wetScale * inData[sample] + dryWet * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
@@ -207,6 +229,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                     applyChorus(sample, false);
 
                 float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
+
+                if (lowPass)
+                    delayedSample = rightLowPass.processSample(delayedSample);
+
+                if (highPass)
+                    delayedSample = rightHighPass.processSample(delayedSample);
+
                 circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;
                 outData[sample] = wetScale * inData[sample] + dryWet * delayedSample; 
@@ -270,6 +299,8 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
     settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() < 0.5f;
     settings.chorus = apvts.getRawParameterValue("Chorus")->load() < 0.5f;
+    settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() < 0.5f;
+    settings.highPass = apvts.getRawParameterValue("High Pass")->load() < 0.5f;
 
     return settings;
 }
@@ -281,14 +312,6 @@ void DelayAudioProcessor::applyChorus(int sample, bool left)
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
 }
 
-void DelayAudioProcessor::updateFilters()
-{
-    auto chainSettings = getChainSettings(apvts);
-
-    // reserved for low and high pass
-}
-
-
 juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createParameters()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
@@ -299,6 +322,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", true));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
 
     return { params.begin(), params.end() };
 }
