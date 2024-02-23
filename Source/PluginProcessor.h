@@ -204,6 +204,8 @@ private:
 	juce::dsp::IIR::Filter<float> rightLowPass;
 	juce::dsp::IIR::Filter<float> leftHighPass;
 	juce::dsp::IIR::Filter<float> rightHighPass;
+	juce::dsp::IIR::Filter<float> leftLowAll;
+	juce::dsp::IIR::Filter<float> rightLowAll;
 
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;

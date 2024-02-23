@@ -111,14 +111,19 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     rightLowPass.reset();
     leftHighPass.reset(); 
     rightHighPass.reset();
+    leftLowAll.reset();
+    rightLowAll.reset();
 
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 10000);
 
     leftLowPass.coefficients = coefficientsLow;
     rightLowPass.coefficients = coefficientsLow;
     leftHighPass.coefficients = coefficientsHigh;
     rightHighPass.coefficients = coefficientsHigh;
+    leftLowAll.coefficients = coefficientsLowAll;
+    rightLowAll.coefficients = coefficientsLowAll;
 
     coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate)); // tape delay effect : one-pole filter
     coeff_sml = 1.0f - std::exp( -1.0f / (0.01f * currentSampleRate));
@@ -176,6 +181,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    // apvts vars
     auto chainsettings = getChainSettings(apvts);
     float newFeedbackTime = chainsettings.feedbackTime;
     float newDryWet = chainsettings.dryWet;
@@ -186,6 +192,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
 
+    // smoothing
     smoothedFeedback.setTargetValue(newFeedbackTime);
     feedbackTime = smoothedFeedback.getNextValue() + ((smoothedFeedback.getNextValue() - feedbackTime) * coeff_sml); 
     smoothedDryWet.setTargetValue(newDryWet);
@@ -215,6 +222,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 if (highPass)
                     delayedSample = leftHighPass.processSample(delayedSample);
 
+                delayedSample = leftLowAll.processSample(delayedSample);
+
                 circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;  // making this to control the volume changes when mixing dry/wet signals
                 outData[sample] = wetScale * inData[sample] + dryWet * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
@@ -235,6 +244,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
                 if (highPass)
                     delayedSample = rightHighPass.processSample(delayedSample);
+
+                delayedSample = rightLowAll.processSample(delayedSample);
 
                 circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
                 float wetScale = (1.0f - dryWet) + dryWet * 0.5;
