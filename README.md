@@ -1,6 +1,6 @@
 # <img src="https://github.com/lachesis17/Delay-Plugin/assets/78860436/62340ccf-bfd4-40f3-a45f-291f1f91831e" width="30"> Delay-ja-vu
 
-![Delay-ja-vu](https://github.com/lachesis17/Delay-Plugin/assets/78860436/feebd6af-abe9-4265-bd73-a00dc3d752f5)
+![Delay-ja-vu](https://github.com/lachesis17/Delay-ja-vu/assets/78860436/d6b45b82-7a4d-4ee2-bc58-d8ea384b80ad)
 
 ### Features
 
