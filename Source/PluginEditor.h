@@ -25,6 +25,8 @@ struct RotaryLookAndFeel : juce::LookAndFeel_V4
                         bool shouldDrawButtonAsHighlighted, 
                         bool shouldDrawButtonAsDown) override;
 
+    juce::ColourGradient getSliderGradient(const juce::Slider& slider, int width, int height) const;
+
     //Font getLabelFont (Label&) override;
     
 private:

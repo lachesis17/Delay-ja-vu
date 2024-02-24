@@ -18,13 +18,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     bounds = bounds * JUCE_LIVE_CONSTANT(0.975); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
 
     auto enabled = slider.isEnabled();
-
-    g.setGradientFill(enabled ? 
-                    ColourGradient (Colour(Colour(43u, 52u, 177u)), 0.175*(float) width, 0.175*(float) height,
-                    Colour(10u, 12u, 68u), 0.75*(float) width, 0.75*(float) height, true) 
-                    : 
-                    ColourGradient (Colour(Colours::lightgrey), 0.175*(float) width, 0.175*(float) height,
-                    Colour(Colours::darkgrey), 0.75*(float) width, 0.75*(float) height, true) );
+    g.setGradientFill(getSliderGradient(slider, width, height));
     g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)));
 
     auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
@@ -83,6 +77,22 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
         const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
         g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
         g.drawFittedText(text, r.toNearestInt(), Justification::centred, 1);
+    }
+}
+
+juce::ColourGradient RotaryLookAndFeel::getSliderGradient(const juce::Slider& slider, int width, int height) const
+{
+    if (slider.isEnabled())
+    {
+    return juce::ColourGradient(
+    juce::Colour(43u, 52u, 177u), 0.175f * width, 0.175f * height,
+    juce::Colour(10u, 12u, 68u), 0.75f * width, 0.75f * height, true);
+    }
+    else
+    {
+    return juce::ColourGradient(
+    juce::Colour(juce::Colours::lightgrey), 0.175f * width, 0.175f * height,
+    juce::Colour(juce::Colours::darkgrey), 0.75f * width, 0.75f * height, true);
     }
 }
 
@@ -237,7 +247,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     lowPassButton.setLookAndFeel(&lnf);
     highPassButton.setLookAndFeel(&lnf);
 
-    int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 1300);
+    int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 1100);
     int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 575);
 
     setSize(width, height);

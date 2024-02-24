@@ -107,6 +107,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     currentSampleRate = getSampleRate();
 
+    //== LOW PASS & HIGH PASS
     leftLowPass.reset(); 
     rightLowPass.reset();
     leftHighPass.reset(); 
@@ -125,14 +126,21 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     leftLowAll.coefficients = coefficientsLowAll;
     rightLowAll.coefficients = coefficientsLowAll;
 
-    coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate)); // tape delay effect : one-pole filter
+    //== ONE-POLE FILTER COEFFICENTS
+    coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate));
     coeff_sml = 1.0f - std::exp( -1.0f / (0.01f * currentSampleRate));
+    coeff_lrg = 1.0f - std::exp( -1.0f / (0.5f * currentSampleRate));
 
+    //== SMOOTHING
     smoothedDelayTimeLeft.reset(currentSampleRate, 0.77f);
     smoothedDelayTimeRight.reset(currentSampleRate, 0.77f);
     smoothedFeedback.reset(currentSampleRate, 0.005);
     smoothedDryWet.reset(currentSampleRate, 0.005);
+    smoothedLowPass.reset(currentSampleRate, 0.77f);
+    smoothedHighPass.reset(currentSampleRate, 0.77f);
+    smoothedChorus.reset(currentSampleRate, 0.05f);
 
+    //== CIRCULAR BUFFER
     circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
     circBuffRight.createCircularBuffer(2 * currentSampleRate);
     circBuffLeft.flushBuffer();
@@ -142,8 +150,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void DelayAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    // When playback stops, you can use this as an opportunity to free up any spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -181,7 +188,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
-    // apvts vars
+    //== PARAMETERS
     auto chainsettings = getChainSettings(apvts);
     float newFeedbackTime = chainsettings.feedbackTime;
     float newDryWet = chainsettings.dryWet;
@@ -192,12 +199,21 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
 
-    // smoothing
-    smoothedFeedback.setTargetValue(newFeedbackTime);
-    feedbackTime = smoothedFeedback.getNextValue() + ((smoothedFeedback.getNextValue() - feedbackTime) * coeff_sml); 
-    smoothedDryWet.setTargetValue(newDryWet);
-    dryWet = smoothedDryWet.getNextValue() + ((smoothedDryWet.getNextValue() - dryWet) * coeff_sml); 
+    //== TOGGLE MIXES
+    toggleButtonStateMixes(lowPass, highPass, chorus);
+    smoothedLowPass.setTargetValue(targetLowPassMix);
+    smoothedHighPass.setTargetValue(targetHighPassMix);
+    smoothedChorus.setTargetValue(targetChorusMix);
 
+    //== SMOOTHING
+    smoothedFeedback.setTargetValue(newFeedbackTime);
+    feedbackTime = applyOnePoleFilter(feedbackTime, smoothedFeedback.getNextValue(), coeff_sml);
+
+    //== MIXING & BYPASS
+    dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
+    dryWetRight = setDryWetMix(newDelayTimeRight, dryWet, newDryWet, smoothedDryWet);
+
+    //== PROCESSING LOOP
     for (int channel = 0; channel < numChannels; ++channel)
     {
     const float* inData = buffer.getReadPointer(channel);
@@ -206,50 +222,64 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
         for (int sample = 0; sample < numSamples; ++sample)
         {
 
-            if (channel == 0) // left channel
+            if (channel == 0) //== LEFT CHANNEL
             {
                 smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
-                delayTimeLeft = smoothedDelayTimeLeft.getNextValue() + ((smoothedDelayTimeLeft.getNextValue() - delayTimeLeft) * coeff); //delayTimeLeft += (newDelayTimeLeft - delayTimeLeft) * coeff; // non-smoothed, apply one-pole filter
+                delayTimeLeft = applyOnePoleFilter(delayTimeLeft, smoothedDelayTimeLeft.getNextValue(), coeff);
 
-                if (chorus && (delayTimeLeft != 0.0f))
-                    applyChorus(sample, true);
+                //== CHORUS
+                smoothedChorus.skip(sample); 
+                delayTimeLeft = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeLeft, smoothedDelayTimeLeft.getNextValue(), newDelayTimeLeft);
 
                 float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
 
-                if (lowPass)
-                    delayedSample = leftLowPass.processSample(delayedSample);                
+                //== LOW PASS
+                currentLowPassMix = smoothedLowPass.getNextValue();
+                float lowPassSample = leftLowPass.processSample(delayedSample);          
+                delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
-                if (highPass)
-                    delayedSample = leftHighPass.processSample(delayedSample);
+                //== HIGH PASS
+                currentHighPassMix = smoothedHighPass.getNextValue();
+                float highPassSample = leftHighPass.processSample(delayedSample);          
+                delayedSample = (1.0f - currentHighPassMix) * delayedSample + currentHighPassMix * highPassSample;
 
+                //== GENERAL LOW PASS
                 delayedSample = leftLowAll.processSample(delayedSample);
-
+                
+                //== MIXING
                 circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
-                float wetScale = (1.0f - dryWet) + dryWet * 0.5;  // making this to control the volume changes when mixing dry/wet signals
-                outData[sample] = wetScale * inData[sample] + dryWet * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
+                float wetScale = (1.0f - dryWetLeft) + dryWetLeft * 0.5;  // making this to control the volume changes when mixing dry/wet signals
+                outData[sample] = wetScale * inData[sample] + dryWetLeft * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 writeIndexLeft = (writeIndexLeft + 1) % circBuffLeft.getBufferLength();
             }
-            else if (channel == 1) // right channel
+            else if (channel == 1) //== RIGHT CHANNEL
             {
                 smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
-                delayTimeRight = smoothedDelayTimeRight.getNextValue() + ((smoothedDelayTimeRight.getNextValue() - delayTimeRight) * coeff);
+                delayTimeRight = applyOnePoleFilter(delayTimeRight, smoothedDelayTimeRight.getNextValue(), coeff);
 
-                if (chorus && (delayTimeRight != 0.0f))
-                    applyChorus(sample, false);
+                //== CHORUS
+                smoothedChorus.skip(sample); 
+                delayTimeRight = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeRight, smoothedDelayTimeRight.getNextValue(), newDelayTimeRight);
 
                 float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
 
-                if (lowPass)
-                    delayedSample = rightLowPass.processSample(delayedSample);
+                //== LOW PASS
+                currentLowPassMix = smoothedLowPass.getNextValue(); 
+                float lowPassSample = rightLowPass.processSample(delayedSample);  
+                delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
-                if (highPass)
-                    delayedSample = rightHighPass.processSample(delayedSample);
+                //== HIGH PASS
+                currentHighPassMix = smoothedHighPass.getNextValue(); 
+                float highPassSample = rightHighPass.processSample(delayedSample);  
+                delayedSample = (1.0f - currentHighPassMix) * delayedSample + currentHighPassMix * highPassSample;
 
+                ///== GENERAL LOW PASS
                 delayedSample = rightLowAll.processSample(delayedSample);
 
+                //== MIXING
                 circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
-                float wetScale = (1.0f - dryWet) + dryWet * 0.5;
-                outData[sample] = wetScale * inData[sample] + dryWet * delayedSample; 
+                float wetScale = (1.0f - dryWetRight) + dryWetRight * 0.5;
+                outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
                 writeIndexRight = (writeIndexRight + 1) % circBuffRight.getBufferLength();
             }
         }
@@ -316,11 +346,39 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     return settings;
 }
 
-void DelayAudioProcessor::applyChorus(int sample, bool left)
+float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float delayedSample, float nextDelayedSample, float newDelayTime)
 {
-    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);    //float randomMod = 0.f;      // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor
-    left ? delayTimeLeft += chorusModulation : delayTimeRight += chorusModulation;        // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
+    chorusModulation = currentMixValue * chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);      //float randomMod = 0.f;      // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor      // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
+    if(chorusPhase > 2.0 * juce::MathConstants<float>::pi) {
+        chorusPhase -= 2.0 * juce::MathConstants<float>::pi;
+    }
+
+    if (newDelayTime == 0.f) {
+        delayedSample = applyOnePoleFilter(delayedSample, nextDelayedSample, coeff);
+        return delayedSample;
+    }
+
+    float chorusSample = delayedSample + chorusModulation;
+    delayedSample = applyOnePoleFilter(delayedSample, chorusSample, coeff);
+    return delayedSample;
+}
+
+float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float coefficient)
+{
+    return next + ((next - current) * coefficient);
+}
+
+void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus) {
+    targetLowPassMix = lowPass ? 1.0f : 0.0f;
+    targetHighPassMix = highPass ? 1.0f : 0.0f;
+    targetChorusMix = chorus ? 1.0f : 0.0f;
+}
+
+float DelayAudioProcessor::setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet) 
+{
+    smoothedDryWet.setTargetValue(newDelayTime == 0.f ? 0.f : newDryWet);
+    return applyOnePoleFilter(dryWet, smoothedDryWet.getNextValue(), newDelayTime == 0.f ? coeff_lrg : coeff_sml);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createParameters()
@@ -333,8 +391,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", true));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
-    params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
-    params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", true));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", true));
 
     return { params.begin(), params.end() };
 }

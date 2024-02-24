@@ -10,7 +10,8 @@
 - [x] Add graphic of line drawing outside slider for value
 - [ ] 'Freeze' mode with feedback & dry/wet @ 1.0f (works, add to toggle)
 - [x] Lowpass / Highpass
-- [ ] Fix popping on toggling states & warping speeds (tukey window)
+- [x] Fix popping on toggling Low/High pass
+- [ ] Fix popping on toggling chorus & warping speeds from 0m/s (tukey window)
 - [ ] Ping Pong
 - [ ] Sync BPM
 - [ ] Add BPM divisions to time sliders (quarter, half etc.), needs to toggle with sync bpm state

@@ -191,10 +191,13 @@ public:
 private:
 	ApplicationProperties appProperties;
 
-	void applyChorus(int sample, bool left);
+	float applyChorus(int sample, float currentMixValue, float delayedSample, float nextDelayedSample, float newDelayTime);
+	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus);
+	float applyOnePoleFilter(float current, float next, float coefficient);
+	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
 
 	MonoChain leftChain, rightChain;
-	juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback, smoothedDryWet;
+	juce::LinearSmoothedValue<float> smoothedDelayTimeLeft, smoothedDelayTimeRight, smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus;
 
 	CircularBuffer<float> circBuffLeft;
 	CircularBuffer<float> circBuffRight;
@@ -207,18 +210,28 @@ private:
 	juce::dsp::IIR::Filter<float> leftLowAll;
 	juce::dsp::IIR::Filter<float> rightLowAll;
 
+	float currentLowPassMix = 0.f;
+	float targetLowPassMix = 0.f;
+	float currentHighPassMix = 0.f;
+	float targetHighPassMix = 0.f;
+	float currentChorusMix = 0.f;
+	float targetChorusMix = 0.f;
+
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;
 	float lastDelayTimeLeft = 100.0f;
 	float lastDelayTimeRight = 100.0f;
 	float coeff;
 	float coeff_sml;
+	float coeff_lrg;
 	float delayTimeLeft;
 	float delayTimeRight;
 	float feedbackTime;
 	float dryWet;
+	float dryWetLeft;
+	float dryWetRight;
 
-	float chorusRate = 0.25f; 
+	float chorusRate = 0.33f; 
 	float chorusDepth = 0.75f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;

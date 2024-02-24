@@ -9,7 +9,7 @@ include(FetchContent)
 set(FETCH_CONTENT_QUIET OFF)
 FetchContent_Declare(
         JUCE
-        GIT_REPOSITORY https://github.com/juce-framework/JUCE.git 
+        GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
         GIT_TAG origin/master
         GIT_SHALLOW ON
         [[FIND_PACKAGE_ARGS 7.0.3 GLOBAL]] <-- Uncomment this funny little character if you don't wanna redownload juce every project but you gotta do some shennanigans which the juce cmake api docs talk you thru 
