@@ -191,7 +191,7 @@ public:
 private:
 	ApplicationProperties appProperties;
 
-	float applyChorus(int sample, float currentMixValue, float delayedSample, float nextDelayedSample, float newDelayTime);
+	float applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime);
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus);
 	float applyOnePoleFilter(float current, float next, float coefficient);
 	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);

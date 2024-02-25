@@ -138,7 +138,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smoothedDryWet.reset(currentSampleRate, 0.005);
     smoothedLowPass.reset(currentSampleRate, 0.77f);
     smoothedHighPass.reset(currentSampleRate, 0.77f);
-    smoothedChorus.reset(currentSampleRate, 0.05f);
+    smoothedChorus.reset(currentSampleRate, 0.005f);
 
     //== CIRCULAR BUFFER
     circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
@@ -224,12 +224,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
             if (channel == 0) //== LEFT CHANNEL
             {
-                smoothedDelayTimeLeft.setTargetValue(newDelayTimeLeft);
-                delayTimeLeft = applyOnePoleFilter(delayTimeLeft, smoothedDelayTimeLeft.getNextValue(), coeff);
-
-                //== CHORUS
+                //== CHORUS & DELAY
                 smoothedChorus.skip(sample); 
-                delayTimeLeft = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeLeft, smoothedDelayTimeLeft.getNextValue(), newDelayTimeLeft);
+                delayTimeLeft = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeLeft, smoothedDelayTimeLeft, newDelayTimeLeft);
 
                 float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
 
@@ -254,12 +251,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
-                smoothedDelayTimeRight.setTargetValue(newDelayTimeRight);
-                delayTimeRight = applyOnePoleFilter(delayTimeRight, smoothedDelayTimeRight.getNextValue(), coeff);
-
-                //== CHORUS
+                //== CHORUS & DELAY
                 smoothedChorus.skip(sample); 
-                delayTimeRight = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeRight, smoothedDelayTimeRight.getNextValue(), newDelayTimeRight);
+                delayTimeRight = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeRight, smoothedDelayTimeRight, newDelayTimeRight);
 
                 float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
 
@@ -346,21 +340,31 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     return settings;
 }
 
-float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float delayedSample, float nextDelayedSample, float newDelayTime)
+float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
 {
-    chorusModulation = currentMixValue * chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);      //float randomMod = 0.f;      // randomMod += 0.05f * (rand() / static_cast<float>(RAND_MAX) - 0.5f); // randomised fun, with 0.05 as smoothing factor      // chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase) + 0.1f * randomMod;
+    chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
-    if(chorusPhase > 2.0 * juce::MathConstants<float>::pi) {
+    if (chorusPhase > 2.0 * juce::MathConstants<float>::pi)
+    {
         chorusPhase -= 2.0 * juce::MathConstants<float>::pi;
     }
 
-    if (newDelayTime == 0.f) {
-        delayedSample = applyOnePoleFilter(delayedSample, nextDelayedSample, coeff);
-        return delayedSample;
+    if (newDelayTime != smoothedDelayTime.getCurrentValue() && newDelayTime != 0.f) 
+    {
+        smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation); // target + chorus + large ramp = yes
+    } 
+    else
+    {
+        smoothedDelayTime.setTargetValue(newDelayTime);
     }
 
-    float chorusSample = delayedSample + chorusModulation;
-    delayedSample = applyOnePoleFilter(delayedSample, chorusSample, coeff);
+    delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff); // need to apply chorus to sample after this, even though it pops
+
+    if (newDelayTime != 0.f) // bypass chorus even when enabled
+    {
+        delayedSample += chorusModulation * currentMixValue;
+    }
+
     return delayedSample;
 }
 
