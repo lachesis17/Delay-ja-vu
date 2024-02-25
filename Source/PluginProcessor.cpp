@@ -138,7 +138,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smoothedDryWet.reset(currentSampleRate, 0.005);
     smoothedLowPass.reset(currentSampleRate, 0.77f);
     smoothedHighPass.reset(currentSampleRate, 0.77f);
-    smoothedChorus.reset(currentSampleRate, 0.005f);
+    smoothedChorus.reset(currentSampleRate, 77.7f);
 
     //== CIRCULAR BUFFER
     circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
@@ -358,7 +358,7 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float 
         smoothedDelayTime.setTargetValue(newDelayTime);
     }
 
-    delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff); // need to apply chorus to sample after this, even though it pops
+    delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff_sml); // need to apply chorus to sample after this, even though it pops
 
     if (newDelayTime != 0.f) // bypass chorus even when enabled
     {
