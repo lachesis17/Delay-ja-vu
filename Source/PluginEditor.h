@@ -72,10 +72,20 @@ private:
 
 struct EnableButton : juce::ToggleButton {};
 
+struct BPMLabel : juce::Label
+{
+    BPMLabel()
+    {
+        auto typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
+        setFont(juce::Font(typeface).withHeight(11.5f));
+        setColour(juce::Label::textColourId, juce::Colours::white);
+    }   
+};
+
 //==============================================================================
 /**
 */
-class DelayAudioProcessorEditor  : public juce::AudioProcessorEditor
+class DelayAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::Timer
 {
 public:
     DelayAudioProcessorEditor (DelayAudioProcessor&);
@@ -84,6 +94,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+  void DelayAudioProcessorEditor::timerCallback() { updateBPMLabel(); }
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -111,6 +122,10 @@ private:
     using ButtonAttachment = APVTS::ButtonAttachment;
     EnableButton dualDelayButton, chorusButton, lowPassButton, highPassButton;
     ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment, lowPassButtonAttachment, highPassButtonAttachment;
+
+    BPMLabel bpmLabel;
+    void updateBPMLabel();
+    float lastBPM = 120.f;
 
     std::vector<juce::Component*> getComps();
 

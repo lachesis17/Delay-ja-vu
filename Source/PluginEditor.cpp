@@ -223,6 +223,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
     delayTimeSliderRight.setTextValueSuffix(" (ms)");
 
+    bpmLabel.setText("120 BPM", juce::dontSendNotification);     //bpmLabel.onClick = [this] { this->updateBPMLabel(); };
+
     bool dualDelayToggled = dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
     delayTimeSliderRight.setEnabled(dualDelayToggled);
 
@@ -256,6 +258,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     int x = r.getWidth();
     int y = r.getHeight();
     setResizeLimits(420, 300, x, y);
+
+    startTimer(500); // to update bpm
 }
 
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
@@ -340,6 +344,7 @@ void DelayAudioProcessorEditor::resized()
     lowPassButton.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
     highPassButton.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
     chorusButton.setBounds(windowWidth * 0.5f - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
+    bpmLabel.setBounds(dualDelayButton.getBounds().getCentreX() - 25, dualDelayButton.getBounds().getY() * 0.15, 100, 30);
 
     int width = getWidth();
     int height = getHeight();
@@ -347,6 +352,15 @@ void DelayAudioProcessorEditor::resized()
     audioProcessor.getAppProperties().getUserSettings()->setValue("WindowHeight", height);
 }
 
+void DelayAudioProcessorEditor::updateBPMLabel()
+{
+    float currentBPM = audioProcessor.getCurrentBPM();
+    if (currentBPM != lastBPM)
+    {
+        lastBPM = currentBPM;
+        bpmLabel.setText(juce::String(currentBPM) + " BPM", juce::dontSendNotification);
+    }
+}
 
 std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
 {
@@ -359,6 +373,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &dualDelayButton,
     &chorusButton,
     &lowPassButton,
-    &highPassButton
+    &highPassButton,
+    &bpmLabel
   };
 }

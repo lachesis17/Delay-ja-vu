@@ -385,6 +385,19 @@ float DelayAudioProcessor::setDryWetMix(float newDelayTime, float dryWet, float 
     return applyOnePoleFilter(dryWet, smoothedDryWet.getNextValue(), newDelayTime == 0.f ? coeff_lrg : coeff_sml);
 }
 
+float DelayAudioProcessor::getCurrentBPM()
+{
+    AudioPlayHead* playHead = getPlayHead();
+    AudioPlayHead::CurrentPositionInfo positionInfo;
+
+    if (playHead && playHead->getCurrentPosition(positionInfo)) {
+        if (positionInfo.bpm > 0) {
+            return positionInfo.bpm;
+            }
+        }
+    return 120.0f;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createParameters()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;

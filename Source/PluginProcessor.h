@@ -187,6 +187,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
 
 	ApplicationProperties& getAppProperties() { return appProperties; }
+	float getCurrentBPM();
 
 private:
 	ApplicationProperties appProperties;
