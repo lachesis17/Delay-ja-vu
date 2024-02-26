@@ -122,7 +122,7 @@ struct ChainSettings {
 	float delayTimeRight {0};
 	float feedbackTime {0};
 	float dryWet {0};
-	bool dualDelay {true};
+	bool dualDelay {false};
 	bool chorus {false};
 	bool lowPass {false};
 	bool highPass {false};

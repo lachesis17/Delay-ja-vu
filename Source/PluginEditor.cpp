@@ -112,7 +112,7 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
         // g.drawRect(bounds);
         
         bool scale = bounds.getWidth() > bounds.getHeight();
-        auto size = scale ?  bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f) : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
+        auto size = scale ?  bounds.getHeight() * 0.5f : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
         auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
 
         float ang = 25.f;
@@ -126,7 +126,7 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
 
         PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
 
-        auto color = toggleButton.getToggleState() ? Colours::dimgrey : Colour(63u, 72u, 204u);
+        auto color = toggleButton.getToggleState() ? Colour(63u, 72u, 204u) : Colours::dimgrey;
 
         g.setColour(color);
         g.strokePath(powerButton, pst);
@@ -223,17 +223,17 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
     delayTimeSliderRight.setTextValueSuffix(" (ms)");
 
-    bool delayToggled = !dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
-    delayTimeSliderRight.setEnabled(delayToggled);
+    bool dualDelayToggled = dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
+    delayTimeSliderRight.setEnabled(dualDelayToggled);
 
     auto safePtr = juce::Component::SafePointer<DelayAudioProcessorEditor>(this);
     dualDelayButton.onClick = [safePtr]()
     {
         if (auto *comp = safePtr.getComponent())
         {
-            auto bypassed = comp->dualDelayButton.getToggleState();
+            auto dualDelayState = comp->dualDelayButton.getToggleState();
             
-            comp->delayTimeSliderRight.setEnabled(!bypassed);
+            comp->delayTimeSliderRight.setEnabled(dualDelayState);
         }
     };
 
@@ -261,6 +261,9 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 {
     dualDelayButton.setLookAndFeel(nullptr);
+    chorusButton.setLookAndFeel(nullptr);
+    lowPassButton.setLookAndFeel(nullptr);
+    highPassButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================

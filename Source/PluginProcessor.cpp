@@ -332,10 +332,10 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
     settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
     settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
-    settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() < 0.5f;
-    settings.chorus = apvts.getRawParameterValue("Chorus")->load() < 0.5f;
-    settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() < 0.5f;
-    settings.highPass = apvts.getRawParameterValue("High Pass")->load() < 0.5f;
+    settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
+    settings.chorus = apvts.getRawParameterValue("Chorus")->load() > 0.5f;
+    settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
+    settings.highPass = apvts.getRawParameterValue("High Pass")->load() > 0.5f;
 
     return settings;
 }
@@ -393,10 +393,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 0, 2000, 320));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Feedback", "Feedback", juce::NormalisableRange<float>(0.f, 1.f, 0.01f, 1.f), 0.25f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
-    params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", true));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
-    params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", true));
-    params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", true));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
 
     return { params.begin(), params.end() };
 }
