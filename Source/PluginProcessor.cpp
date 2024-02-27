@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -160,10 +152,8 @@ bool DelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
+    // This is the place where you check if the layout is supported. In this template code we only support mono or stereo.
+    // Some plugin hosts, such as certain GarageBand versions, will only load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
@@ -306,38 +296,17 @@ juce::AudioProcessorEditor* DelayAudioProcessor::createEditor()
 //==============================================================================
 void DelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    //auto editor = apvts.state.getOrCreateChildWithName ("editor", nullptr);
     juce::MemoryOutputStream mos(destData, true);
     apvts.state.writeToStream(mos);
 }
 
 void DelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
     auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
     if (tree.isValid())
     {
         apvts.replaceState(tree);
     }
-}
-
-ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
-    ChainSettings settings;
-
-    settings.delayTimeLeft = apvts.getRawParameterValue("Delay Left")->load();
-    settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
-    settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
-    settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
-    settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
-    settings.chorus = apvts.getRawParameterValue("Chorus")->load() > 0.5f;
-    settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
-    settings.highPass = apvts.getRawParameterValue("High Pass")->load() > 0.5f;
-
-    return settings;
 }
 
 float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
@@ -351,7 +320,7 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float 
 
     if (newDelayTime != smoothedDelayTime.getCurrentValue() && newDelayTime != 0.f) 
     {
-        smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation); // target + chorus + large ramp = yes
+        smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation * 0.7); // target + chorus + large ramp = yes
     } 
     else
     {
@@ -398,9 +367,30 @@ float DelayAudioProcessor::getCurrentBPM()
     return 120.0f;
 }
 
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
+    ChainSettings settings;
+
+    settings.delayTimeLeft = apvts.getRawParameterValue("Delay Left")->load();
+    settings.delayTimeRight = apvts.getRawParameterValue("Delay Right")->load();
+    settings.feedbackTime = apvts.getRawParameterValue("Feedback")->load();
+    settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
+    settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
+    settings.chorus = apvts.getRawParameterValue("Chorus")->load() > 0.5f;
+    settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
+    settings.highPass = apvts.getRawParameterValue("High Pass")->load() > 0.5f;
+
+    return settings;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createParameters()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+
+    // juce::StringArray noteStringArray;
+    // std::vector<juce::String> divArray = {"1/64", "1/64D", "1/32", "1/32D", "1/16", "1/16D", "1/8", "1/8D", "1/4", "1/4D", "1/2", "1/2D", "1/1"};
+    // for (const auto& div : divArray) {
+    //     noteStringArray.add(div);
+    // }
 
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Left", "Delay Left", 0, 2000, 320));
     params.push_back(std::make_unique<juce::AudioParameterInt>("Delay Right", "Delay Right", 0, 2000, 320));
@@ -410,6 +400,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
+
+    //params.push_back(std::make_unique<juce::AudioParameterChoice>("Divisions", "Divisions", noteStringArray, 0));
 
     return { params.begin(), params.end() };
 }
