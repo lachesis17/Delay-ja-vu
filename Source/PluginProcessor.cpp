@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "DelayLine.h"
 
 //==============================================================================
 DelayAudioProcessor::DelayAudioProcessor()
@@ -98,6 +99,8 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     rightChain.prepare(spec);
 
     currentSampleRate = getSampleRate();
+    leftDelay = std::make_unique<DelayLine>(currentSampleRate);
+    rightDelay = std::make_unique<DelayLine>(currentSampleRate);
 
     //== LOW PASS & HIGH PASS
     leftLowPass.reset(); 
@@ -124,8 +127,8 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     coeff_lrg = 1.0f - std::exp( -1.0f / (0.5f * currentSampleRate));
 
     //== SMOOTHING
-    smoothedDelayTimeLeft.reset(currentSampleRate, 0.77f);
-    smoothedDelayTimeRight.reset(currentSampleRate, 0.77f);
+    leftDelay->resetSmoothedValue(0.77f);
+    rightDelay->resetSmoothedValue(0.77f);
     smoothedFeedback.reset(currentSampleRate, 0.005);
     smoothedDryWet.reset(currentSampleRate, 0.005);
     smoothedLowPass.reset(currentSampleRate, 0.77f);
@@ -133,10 +136,8 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smoothedChorus.reset(currentSampleRate, 77.7f);
 
     //== CIRCULAR BUFFER
-    circBuffLeft.createCircularBuffer(2 * currentSampleRate);   // doubled or limited to 1365ms @ 48k
-    circBuffRight.createCircularBuffer(2 * currentSampleRate);
-    circBuffLeft.flushBuffer();
-    circBuffRight.flushBuffer();
+    leftDelay->makeBuffer();
+    rightDelay->makeBuffer();
 }
 
 
@@ -216,9 +217,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             {
                 //== CHORUS & DELAY
                 smoothedChorus.skip(sample); 
-                delayTimeLeft = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeLeft, smoothedDelayTimeLeft, newDelayTimeLeft);
+                //delayTimeLeft = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeLeft, smoothedDelayTimeLeft, newDelayTimeLeft);
+                //leftDelay.delayTime = leftDelay.applyChorus(sample, smoothedChorus.getCurrentValue(), leftDelay.delayTime, leftDelay.smoothedDelayTime, newDelayTimeLeft);
+                leftDelay->delayTime = applyChorus(sample, smoothedChorus.getCurrentValue(), leftDelay->delayTime, leftDelay->smoothedDelayTime, newDelayTimeLeft);
+                //leftDelay->updateDelayTime(applyChorus(sample, smoothedChorus.getCurrentValue(), leftDelay->getCurrentDelayTime(), leftDelay->getSmoothedValue(), newDelayTimeLeft));  // can't use leftDelay->getSmoothedValue() here because applyChorus() in processor wants to reference the reference...
 
-                float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
+                //float delayedSample = circBuffLeft.readBuffer(delayTimeLeft * currentSampleRate / 1000.0);
+                float delayedSample = leftDelay->readBufferDelayedSample();
 
                 //== LOW PASS
                 currentLowPassMix = smoothedLowPass.getNextValue();
@@ -234,18 +239,26 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 delayedSample = leftLowAll.processSample(delayedSample);
                 
                 //== MIXING
-                circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                //circBuffLeft.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                //leftDelay.circBuff.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                leftDelay->writeDelayBuffer(inData[sample], feedbackTime, delayedSample);
                 float wetScale = (1.0f - dryWetLeft) + dryWetLeft * 0.5;  // making this to control the volume changes when mixing dry/wet signals
                 outData[sample] = wetScale * inData[sample] + dryWetLeft * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
-                writeIndexLeft = (writeIndexLeft + 1) % circBuffLeft.getBufferLength();
+                //writeIndexLeft = (writeIndexLeft + 1) % circBuffLeft.getBufferLength();
+                //leftDelay.writeIndex = (leftDelay.writeIndex + 1) % leftDelay.circBuff.getBufferLength();
+                leftDelay->updateWriteIndex();
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
                 //== CHORUS & DELAY
                 smoothedChorus.skip(sample); 
-                delayTimeRight = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeRight, smoothedDelayTimeRight, newDelayTimeRight);
+                //delayTimeRight = applyChorus(sample, smoothedChorus.getCurrentValue(), delayTimeRight, smoothedDelayTimeRight, newDelayTimeRight);
+                //rightDelay.delayTime = leftDelay.applyChorus(sample, smoothedChorus.getCurrentValue(), rightDelay.delayTime, rightDelay.smoothedDelayTime, newDelayTimeRight);
+                rightDelay->delayTime = applyChorus(sample, smoothedChorus.getCurrentValue(), rightDelay->delayTime, rightDelay->smoothedDelayTime, newDelayTimeRight);
+                //rightDelay->updateDelayTime(applyChorus(sample, smoothedChorus.getCurrentValue(), rightDelay->getCurrentDelayTime(), rightDelay->getSmoothedValue(), newDelayTimeRight));
 
-                float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
+                //float delayedSample = circBuffRight.readBuffer(delayTimeRight * currentSampleRate / 1000.0);
+                float delayedSample = rightDelay->readBufferDelayedSample();
 
                 //== LOW PASS
                 currentLowPassMix = smoothedLowPass.getNextValue(); 
@@ -261,10 +274,14 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 delayedSample = rightLowAll.processSample(delayedSample);
 
                 //== MIXING
-                circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                //circBuffRight.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                //rightDelay.circBuff.writeBuffer(inData[sample] + feedbackTime * delayedSample);
+                rightDelay->writeDelayBuffer(inData[sample], feedbackTime, delayedSample);
                 float wetScale = (1.0f - dryWetRight) + dryWetRight * 0.5;
                 outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
-                writeIndexRight = (writeIndexRight + 1) % circBuffRight.getBufferLength();
+                //writeIndexRight = (writeIndexRight + 1) % circBuffRight.getBufferLength();
+                //rightDelay.writeIndex = (rightDelay.writeIndex + 1) % rightDelay.circBuff.getBufferLength();
+                rightDelay->updateWriteIndex();
             }
         }
     }
@@ -276,9 +293,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
     leftChain.process(leftContext);
     rightChain.process(rightContext);
-
-    lastDelayTimeLeft = newDelayTimeLeft;
-    lastDelayTimeRight = newDelayTimeRight;
 }
 
 //==============================================================================
@@ -320,7 +334,7 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, float 
 
     if (newDelayTime != smoothedDelayTime.getCurrentValue() && newDelayTime != 0.f) 
     {
-        smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation * 0.7); // target + chorus + large ramp = yes
+        smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation * 0.5); // target + chorus + large ramp = yes
     } 
     else
     {
