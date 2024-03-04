@@ -23,8 +23,7 @@ using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
 
 //==============================================================================
-/**
-*/
+
 class DelayAudioProcessor  : public juce::AudioProcessor
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
@@ -78,7 +77,7 @@ public:
 private:
 	ApplicationProperties appProperties;
 
-	float applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime);
+	float applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime);
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus);
 	float applyOnePoleFilter(float current, float next, float coefficient);
 	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);

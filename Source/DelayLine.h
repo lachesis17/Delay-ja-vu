@@ -76,13 +76,6 @@ public:
 
 	//==============================================================================
 
-	float setNewDelayTime(float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
-	{
-		smoothedDelayTime.setTargetValue(newDelayTime);
-		delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff);
-		return delayedSample;
-	}
-
 	float getCurrentDelayTime()
 	{
 		return delayTime;
@@ -99,15 +92,36 @@ public:
 		coeff = 1.0f - std::exp(-1.0f / (0.1f * newSampleRate));
 	}
 
+	//==============================================================================
+
 	void resetSmoothedValue(double factor)
 	{
 		smoothedDelayTime.reset(currentSampleRate, factor);
 	}
 
-	juce::LinearSmoothedValue<float>& getSmoothedValue()
+	float getSmoothedCurrent()
 	{
-		return smoothedDelayTime;
+		return smoothedDelayTime.getCurrentValue();
 	}
+
+	float getSmoothedNext()
+	{
+		return smoothedDelayTime.getNextValue();
+	}
+
+	float setNewTargetWithSmooth(float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
+	{
+		smoothedDelayTime.setTargetValue(newDelayTime);
+		delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff);
+		return delayedSample;
+	}
+
+	void setNewTarget(float newDelayTime)
+	{
+		smoothedDelayTime.setTargetValue(newDelayTime);
+	}
+
+	//==============================================================================
 
 	float applyOnePoleFilter(float current, float next, float coefficient)
 	{
@@ -125,7 +139,7 @@ public:
 
 		if (newDelayTime != smoothedDelayTime.getCurrentValue() && newDelayTime != 0.f) 
 		{
-			smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation * 0.5f);
+			smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation);
 		} 
 		else
 		{
@@ -167,10 +181,11 @@ public:
 	}
 
 	//==============================================================================
-	float delayTime;
-	juce::LinearSmoothedValue<float> smoothedDelayTime;
+
 private:
 	CircularBuffer<float> circBuff;
+	juce::LinearSmoothedValue<float> smoothedDelayTime;
+	float delayTime;
 
 	float coeff;
 	double currentSampleRate;
