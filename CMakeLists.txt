@@ -57,6 +57,7 @@ target_sources(Delay-ja-vu
         Source/PluginProcessor.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.h
+        Source/DelayLine.h
         Resources/resources.rc
         )
 
