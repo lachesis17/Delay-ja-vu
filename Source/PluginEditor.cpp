@@ -2,7 +2,7 @@
 #include "PluginEditor.h"
 
 void RotaryLookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float currentValue,
-float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
+float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
 {
     using namespace juce;
 
@@ -10,7 +10,19 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     bounds = bounds * JUCE_LIVE_CONSTANT(0.975); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
 
     auto enabled = slider.isEnabled();
-    g.setGradientFill(getSliderGradient(slider, width, height));
+
+    auto enabledGradient = getSliderGradient(width, height, true);
+    auto disabledGradient = getSliderGradient(width, height, false);
+    float alpha = dynamic_cast<RotarySliderWithLabels*>(&slider) ? dynamic_cast<RotarySliderWithLabels*>(&slider)->getAlpha() : 1.0f;
+
+    ColourGradient currentGradient;
+    for (int i = 0; i < enabledGradient.getNumColours(); ++i)
+    {
+        Colour col = enabledGradient.getColour(i).interpolatedWith(disabledGradient.getColour(i), 1.0f - alpha);
+        currentGradient.addColour(enabledGradient.getColourPosition(i), col);
+    }
+
+    g.setGradientFill(currentGradient);
     g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)));
 
     auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
@@ -72,9 +84,9 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider & slider)
     }
 }
 
-juce::ColourGradient RotaryLookAndFeel::getSliderGradient(const juce::Slider& slider, int width, int height) const
+juce::ColourGradient RotaryLookAndFeel::getSliderGradient(int width, int height, bool enabled) const
 {
-    if (slider.isEnabled())
+    if (enabled)
     {
     return juce::ColourGradient(
     juce::Colour(43u, 52u, 177u), 0.175f * width, 0.175f * height,
@@ -94,36 +106,40 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
                         bool shouldDrawButtonAsDown)
 {
     using namespace juce;
+    Path powerButton, shadowPath;
 
-    // if (auto *pb = dynamic_cast<EnableButton*>(&toggleButton)) // if you can cast one of the widgets to this class, do this
+    auto bounds = toggleButton.getLocalBounds();
+    // g.setColour(Colours::yellow);
+    // g.drawRect(bounds);
+    
+    bool scale = bounds.getWidth() > bounds.getHeight();
+    auto size = scale ?  bounds.getHeight() * 0.5f : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
+    auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+
+    float ang = 25.f;
+    size -= 7;;
+
+    powerButton.addCentredArc(r.getCentreX(), r.getCentreY(), size * 0.5, size * 0.5, 0.f, degreesToRadians(ang), degreesToRadians(360.f - ang), true);
+    powerButton.startNewSubPath(r.getCentreX(), r.getY());
+    powerButton.lineTo(r.getCentre());
+
+    PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
+
+    // auto shadowRadius = size * 0.5f + (size * 0.1f); // make a drop shadow that's slightly larger than the button
+    // auto shadowTop = r.getCentre() - juce::Point<float>(shadowRadius, shadowRadius);
+    // shadowPath.addEllipse(shadowTop.x, shadowTop.y, shadowRadius * 2, shadowRadius * 2);
+    // if (auto *eb = dynamic_cast<EnableButton*>(&toggleButton))  // if you can cast one of the widgets to this class, do this (dynamic_cast)
     // {
-        Path powerButton;
+    //     DropShadow shadow(Colour(30u, 20u, 75u).withAlpha(eb->getAlpha()), 10, Point<int>(0, 0));
+    //     shadow.drawForPath(g, shadowPath);
+    // }
 
-        auto bounds = toggleButton.getLocalBounds();
-        // g.setColour(Colours::yellow);
-        // g.drawRect(bounds);
-        
-        bool scale = bounds.getWidth() > bounds.getHeight();
-        auto size = scale ?  bounds.getHeight() * 0.5f : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.5f); // toggle button size
-        auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+    float alpha = (dynamic_cast<EnableButton*>(&toggleButton))->getAlpha();
+    Colour blendedColour = Colours::dimgrey.interpolatedWith(Colour(63u, 72u, 204u), alpha);
 
-        float ang = 25.f;
-
-        size -= 7;
-
-        powerButton.addCentredArc(r.getCentreX(), r.getCentreY(), size * 0.5, size * 0.5, 0.f, degreesToRadians(ang), degreesToRadians(360.f - ang), true);
-
-        powerButton.startNewSubPath(r.getCentreX(), r.getY());
-        powerButton.lineTo(r.getCentre());
-
-        PathStrokeType pst(2.f, PathStrokeType::JointStyle::curved);
-
-        auto color = toggleButton.getToggleState() ? Colour(63u, 72u, 204u) : Colours::dimgrey;
-
-        g.setColour(color);
-        g.strokePath(powerButton, pst);
-        g.drawEllipse(r, 2);
-    //}
+    g.setColour(blendedColour);
+    g.strokePath(powerButton, pst);
+    g.drawEllipse(r, 2);
 }
 
 void RotarySliderWithLabels::paint(juce::Graphics &g)
@@ -219,6 +235,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
 
     bool dualDelayToggled = dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
     delayTimeSliderRight.setEnabled(dualDelayToggled);
+    delayTimeSliderRight.animateColor();
 
     auto safePtr = juce::Component::SafePointer<DelayAudioProcessorEditor>(this);
     dualDelayButton.onClick = [safePtr]()
@@ -228,6 +245,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
             auto dualDelayState = comp->dualDelayButton.getToggleState();
             
             comp->delayTimeSliderRight.setEnabled(dualDelayState);
+            comp->delayTimeSliderRight.animateColor();
+            comp->dualDelayButton.animateColor();
         }
     };
 

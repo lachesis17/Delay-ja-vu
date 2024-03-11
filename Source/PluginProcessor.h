@@ -118,6 +118,11 @@ private:
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
 
+	std::array<std::unique_ptr<DelayLine>, 6> reverbDelaysLeft;
+	const std::array<float, 6> fixedDelayTimesLeft = {27.0f, 32.0f, 48.0f, 56.0f, 77.0f, 93.0f};
+	std::array<std::unique_ptr<DelayLine>, 6> reverbDelaysRight;
+	const std::array<float, 6> fixedDelayTimesRight = {36.0f, 44.0f, 58.0f, 62.0f, 88.0f, 99.0f};
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
 };

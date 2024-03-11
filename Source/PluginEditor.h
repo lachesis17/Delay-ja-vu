@@ -5,21 +5,21 @@
 
 struct RotaryLookAndFeel : juce::LookAndFeel_V4
 {
-    void drawRotarySlider (juce::Graphics&, // from juce::LookAndFeel_V4 class line 206
-                        int x, int y, int width, int height,
-                        float sliderPosProportional,
-                        float rotaryStartAngle,
-                        float rotaryEndAngle,
-                        juce::Slider&) override;
+  void drawRotarySlider (juce::Graphics&, // from juce::LookAndFeel_V4 class line 206
+                      int x, int y, int width, int height,
+                      float sliderPosProportional,
+                      float rotaryStartAngle,
+                      float rotaryEndAngle,
+                      juce::Slider&) override;
 
-    void drawToggleButton (juce::Graphics &g, // line 119
-                        juce::ToggleButton &toggleButton, 
-                        bool shouldDrawButtonAsHighlighted, 
-                        bool shouldDrawButtonAsDown) override;
+  void drawToggleButton (juce::Graphics &g, // line 119
+                      juce::ToggleButton &toggleButton, 
+                      bool shouldDrawButtonAsHighlighted, 
+                      bool shouldDrawButtonAsDown) override;
 
-    juce::ColourGradient getSliderGradient(const juce::Slider& slider, int width, int height) const;
+  juce::ColourGradient getSliderGradient(int width, int height, bool enabled) const;
 
-    //Font getLabelFont (Label&) override;
+  //Font getLabelFont (Label&) override;
     
 private:
 
@@ -27,7 +27,9 @@ const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(Bin
     // g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
 };
 
-struct RotarySliderWithLabels : juce::Slider
+//==============================================================================
+
+struct RotarySliderWithLabels : juce::Slider, juce::Timer
 {
   RotarySliderWithLabels(juce::RangedAudioParameter& rap, const juce::String& unitSuffix) : 
   juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
@@ -37,8 +39,7 @@ struct RotarySliderWithLabels : juce::Slider
     setLookAndFeel(&lnf);
   }
 
-  // setLookAndFeel, so unset it with destructor
-  ~RotarySliderWithLabels()
+  ~RotarySliderWithLabels() // setLookAndFeel, unset with destructor
   {
     setLookAndFeel(nullptr);
   }
@@ -51,6 +52,27 @@ struct RotarySliderWithLabels : juce::Slider
 
   juce::Array<LabelPos> labels;
 
+//=======================================
+  float alpha = 1.0f;
+  float targetAlpha = 0.0f;
+  float animationSpeed = 0.04f;
+
+void animateColor()
+  {
+    targetAlpha = isEnabled() ? 1.0f : 0.0f;
+    startTimerHz(120);
+  }
+
+  void timerCallback() override
+  {
+    alpha = alpha < targetAlpha ? std::min(alpha + animationSpeed, targetAlpha) : alpha = std::max(alpha - animationSpeed, targetAlpha);
+    repaint();
+    if (alpha == targetAlpha) { stopTimer(); }
+  }
+
+  float getAlpha() const { return alpha; }
+//=======================================
+
   void paint(juce::Graphics& g) override;
   juce::Rectangle<int> getSliderBounds() const;
   int getTextHeight() const { return 14; }
@@ -62,21 +84,46 @@ private:
   juce::String suffix;
 };
 
-struct EnableButton : juce::ToggleButton {};
+//==============================================================================
 
-struct BPMLabel : juce::Label
-{
-    BPMLabel()
-    {
-        auto typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
-        setFont(juce::Font(typeface).withHeight(11.5f));
-        setColour(juce::Label::textColourId, juce::Colours::white);
-    }   
+struct EnableButton : juce::ToggleButton, juce::Timer {
+  float alpha = 0.0f;
+  float targetAlpha = 0.0f;
+  float animationSpeed = 0.04f;
+
+  EnableButton() {
+    onClick = [this] { animateColor(); };
+  }
+
+  void animateColor() {
+    targetAlpha = getToggleState() ? 1.0f : 0.0f;
+    startTimerHz(120);
+  }
+
+  void timerCallback() override
+  {
+    alpha = alpha < targetAlpha ? std::min(alpha + animationSpeed, targetAlpha) : alpha = std::max(alpha - animationSpeed, targetAlpha);
+    repaint();
+    if (alpha == targetAlpha) { stopTimer(); }
+  }
+
+  float getAlpha() const { return alpha; }
 };
 
 //==============================================================================
-/**
-*/
+
+struct BPMLabel : juce::Label
+{
+  BPMLabel()
+  {
+    auto typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
+    setFont(juce::Font(typeface).withHeight(11.5f));
+    setColour(juce::Label::textColourId, juce::Colours::white);
+  }   
+};
+
+//==============================================================================
+
 class DelayAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::Timer
 {
 public:

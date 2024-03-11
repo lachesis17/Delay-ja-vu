@@ -102,6 +102,15 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     leftDelay = std::make_unique<DelayLine>(currentSampleRate);
     rightDelay = std::make_unique<DelayLine>(currentSampleRate);
 
+    // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
+    //     reverbDelaysLeft[i] = std::make_unique<DelayLine>(currentSampleRate);
+    //     reverbDelaysRight[i] = std::make_unique<DelayLine>(currentSampleRate);
+    //     reverbDelaysLeft[i]->resetSmoothedValue(0.7f);
+    //     reverbDelaysRight[i]->resetSmoothedValue(0.7f);
+    //     reverbDelaysLeft[i]->makeBuffer();
+    //     reverbDelaysRight[i]->makeBuffer();
+    // }
+
     //== LOW PASS & HIGH PASS
     leftLowPass.reset(); 
     rightLowPass.reset();
@@ -204,6 +213,11 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
     dryWetRight = setDryWetMix(newDelayTimeRight, dryWet, newDryWet, smoothedDryWet);
 
+    // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
+    //     reverbDelaysLeft[i]->setNewTarget(fixedDelayTimesLeft[i]);
+    //     reverbDelaysRight[i]->setNewTarget(fixedDelayTimesRight[i]);
+    // }
+
     //== PROCESSING LOOP
     for (int channel = 0; channel < numChannels; ++channel)
     {
@@ -240,6 +254,28 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float wetScale = (1.0f - dryWetLeft) + dryWetLeft * 0.5;  // making this to control the volume changes when mixing dry/wet signals
                 outData[sample] = wetScale * inData[sample] + dryWetLeft * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 leftDelay->updateWriteIndex();
+
+                // float reverbDecay = 0.8f;
+                // float combinedReverbSignal = 0.0f;
+
+                // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
+                //     float reverb = reverbDelaysLeft[i]->getCurrentDelayTime();
+                //     reverb = applyOnePoleFilter(reverb, reverbDelaysLeft[i]->getSmoothedNext(), coeff_sml);
+                //     reverbDelaysLeft[i]->updateDelayTime(reverb);
+
+                //     float delayedReverbSample = reverbDelaysLeft[i]->readBufferDelayedSample();
+
+                //     //delayedReverbSample = leftLowAll.processSample(delayedReverbSample);
+
+                //     reverbDelaysLeft[i]->writeDelayBuffer(inData[sample], reverbDecay, delayedReverbSample);
+                //     float reverbWetLevel = 0.98f;
+                //     combinedReverbSignal += dryWetLeft * delayedReverbSample;
+                //     reverbDelaysLeft[i]->updateWriteIndex();
+                //     reverbDecay -= 0.15f;
+                // }
+
+                // outData[sample] += combinedReverbSignal;
+
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
@@ -268,6 +304,28 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float wetScale = (1.0f - dryWetRight) + dryWetRight * 0.5;
                 outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
                 rightDelay->updateWriteIndex();
+
+                // float reverbDecay = 0.9f;
+                // float combinedReverbSignal = 0.0f;
+
+                // for (size_t i = 0; i < reverbDelaysRight.size(); ++i) {
+                //     float reverb = reverbDelaysRight[i]->getCurrentDelayTime();
+                //     reverb = applyOnePoleFilter(reverb, reverbDelaysRight[i]->getSmoothedNext(), coeff_sml);
+                //     reverbDelaysRight[i]->updateDelayTime(reverb);
+
+                //     float delayedReverbSample = reverbDelaysRight[i]->readBufferDelayedSample();
+
+                //     //delayedReverbSample = rightLowAll.processSample(delayedReverbSample);
+
+                //     reverbDelaysRight[i]->writeDelayBuffer(inData[sample], reverbDecay, delayedReverbSample);
+                //     float reverbWetLevel = 0.98f;
+                //     combinedReverbSignal += dryWetRight * delayedReverbSample;
+                //     reverbDelaysRight[i]->updateWriteIndex();
+                //     reverbDecay -= 0.15f;
+                // }
+
+                // outData[sample] += combinedReverbSignal;
+
             }
         }
     }
