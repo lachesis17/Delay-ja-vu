@@ -102,15 +102,6 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     leftDelay = std::make_unique<DelayLine>(currentSampleRate);
     rightDelay = std::make_unique<DelayLine>(currentSampleRate);
 
-    // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
-    //     reverbDelaysLeft[i] = std::make_unique<DelayLine>(currentSampleRate);
-    //     reverbDelaysRight[i] = std::make_unique<DelayLine>(currentSampleRate);
-    //     reverbDelaysLeft[i]->resetSmoothedValue(0.7f);
-    //     reverbDelaysRight[i]->resetSmoothedValue(0.7f);
-    //     reverbDelaysLeft[i]->makeBuffer();
-    //     reverbDelaysRight[i]->makeBuffer();
-    // }
-
     //== LOW PASS & HIGH PASS
     leftLowPass.reset(); 
     rightLowPass.reset();
@@ -122,6 +113,8 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 10000);
+    float g = 0.5f;
+    auto allPassCoefficients = new juce::dsp::IIR::Coefficients<float>(-g, 1.0f, 1.0f, -g);
 
     leftLowPass.coefficients = coefficientsLow;
     rightLowPass.coefficients = coefficientsLow;
@@ -129,6 +122,24 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     rightHighPass.coefficients = coefficientsHigh;
     leftLowAll.coefficients = coefficientsLowAll;
     rightLowAll.coefficients = coefficientsLowAll;
+
+    //== REVERB LINES
+    for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
+        reverbDelaysLeft[i] = std::make_unique<DelayLine>(currentSampleRate);
+        reverbDelaysRight[i] = std::make_unique<DelayLine>(currentSampleRate);
+        reverbDelaysLeft[i]->resetSmoothedValue(0.7f);
+        reverbDelaysRight[i]->resetSmoothedValue(0.7f);
+        reverbDelaysLeft[i]->makeBuffer();
+        reverbDelaysRight[i]->makeBuffer();
+        reverbLowPassLeft[i].reset();
+        reverbLowPassRight[i].reset();
+        reverbLowPassLeft[i].coefficients = coefficientsLow;
+        reverbLowPassRight[i].coefficients = coefficientsLow;
+        reverbAllPassLeft[i].reset();
+        reverbAllPassRight[i].reset();
+        reverbAllPassLeft[i].coefficients = allPassCoefficients;
+        reverbAllPassRight[i].coefficients = allPassCoefficients;
+    }
 
     //== ONE-POLE FILTER COEFFICENTS
     coeff = 1.0f - std::exp( -1.0f / (0.1f * currentSampleRate));
@@ -198,6 +209,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     bool highPass = chainsettings.highPass;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
+    bool reverb = false;
 
     //== TOGGLE MIXES
     toggleButtonStateMixes(lowPass, highPass, chorus);
@@ -213,10 +225,12 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
     dryWetRight = setDryWetMix(newDelayTimeRight, dryWet, newDryWet, smoothedDryWet);
 
-    // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
-    //     reverbDelaysLeft[i]->setNewTarget(fixedDelayTimesLeft[i]);
-    //     reverbDelaysRight[i]->setNewTarget(fixedDelayTimesRight[i]);
-    // }
+    //== REVERB DELAY TIMES
+    for (size_t i = 0; i < reverbDelaysLeft.size(); ++i)
+    {
+        reverbDelaysLeft[i]->setNewTarget(fixedDelayTimesLeft[i]);
+        reverbDelaysRight[i]->setNewTarget(fixedDelayTimesRight[i]);
+    }
 
     //== PROCESSING LOOP
     for (int channel = 0; channel < numChannels; ++channel)
@@ -255,27 +269,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 outData[sample] = wetScale * inData[sample] + dryWetLeft * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 leftDelay->updateWriteIndex();
 
-                // float reverbDecay = 0.8f;
-                // float combinedReverbSignal = 0.0f;
-
-                // for (size_t i = 0; i < reverbDelaysLeft.size(); ++i) {
-                //     float reverb = reverbDelaysLeft[i]->getCurrentDelayTime();
-                //     reverb = applyOnePoleFilter(reverb, reverbDelaysLeft[i]->getSmoothedNext(), coeff_sml);
-                //     reverbDelaysLeft[i]->updateDelayTime(reverb);
-
-                //     float delayedReverbSample = reverbDelaysLeft[i]->readBufferDelayedSample();
-
-                //     //delayedReverbSample = leftLowAll.processSample(delayedReverbSample);
-
-                //     reverbDelaysLeft[i]->writeDelayBuffer(inData[sample], reverbDecay, delayedReverbSample);
-                //     float reverbWetLevel = 0.98f;
-                //     combinedReverbSignal += dryWetLeft * delayedReverbSample;
-                //     reverbDelaysLeft[i]->updateWriteIndex();
-                //     reverbDecay -= 0.15f;
-                // }
-
-                // outData[sample] += combinedReverbSignal;
-
+                //== REVERB
+                if (reverb)
+                {
+                    float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft, reverbAllPassLeft, inData[sample], dryWetLeft);
+                    combinedReverb /= (reverbDelaysLeft.size() / 2); // pseudo normalising
+                    outData[sample] += combinedReverb;
+                }
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
@@ -305,27 +305,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
                 rightDelay->updateWriteIndex();
 
-                // float reverbDecay = 0.9f;
-                // float combinedReverbSignal = 0.0f;
-
-                // for (size_t i = 0; i < reverbDelaysRight.size(); ++i) {
-                //     float reverb = reverbDelaysRight[i]->getCurrentDelayTime();
-                //     reverb = applyOnePoleFilter(reverb, reverbDelaysRight[i]->getSmoothedNext(), coeff_sml);
-                //     reverbDelaysRight[i]->updateDelayTime(reverb);
-
-                //     float delayedReverbSample = reverbDelaysRight[i]->readBufferDelayedSample();
-
-                //     //delayedReverbSample = rightLowAll.processSample(delayedReverbSample);
-
-                //     reverbDelaysRight[i]->writeDelayBuffer(inData[sample], reverbDecay, delayedReverbSample);
-                //     float reverbWetLevel = 0.98f;
-                //     combinedReverbSignal += dryWetRight * delayedReverbSample;
-                //     reverbDelaysRight[i]->updateWriteIndex();
-                //     reverbDecay -= 0.15f;
-                // }
-
-                // outData[sample] += combinedReverbSignal;
-
+                //== REVERB
+                if (reverb)
+                {
+                    float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight, reverbAllPassRight, inData[sample], dryWetRight);
+                    combinedReverb /= (reverbDelaysRight.size() / 2); // pseudo normalising
+                    outData[sample] += combinedReverb;
+                }
             }
         }
     }
@@ -394,6 +380,35 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, DelayL
     }
 
     return delayedSample;
+}
+
+float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10>& reverbDelays,
+                                       std::array<juce::dsp::IIR::Filter<float>, 10>& reverbLowPass,
+                                       std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass,
+                                       float sample,
+                                       float& dryWet)
+{
+    float reverbDecay = 0.8f;
+    float combinedReverb = 0.0f;
+
+    for (size_t i = 0; i < reverbDelays.size(); ++i)
+        {
+            float reverb = reverbDelays[i]->getCurrentDelayTime();
+            reverb = applyOnePoleFilter(reverb, reverbDelays[i]->getSmoothedNext(), coeff_sml);
+            reverbDelays[i]->updateDelayTime(reverb);
+
+            float delayedReverbSample = reverbDelays[i]->readBufferDelayedSample();
+
+            delayedReverbSample = reverbLowPass[i].processSample(delayedReverbSample);
+            delayedReverbSample = reverbAllPass[i].processSample(delayedReverbSample);
+
+            reverbDelays[i]->writeDelayBuffer(sample, reverbDecay, delayedReverbSample);
+            combinedReverb += dryWet * delayedReverbSample;
+            reverbDelays[i]->updateWriteIndex();
+            reverbDecay -= 0.025f;
+        }
+
+    return combinedReverb;
 }
 
 float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float coefficient)
