@@ -6,8 +6,8 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
 {
     using namespace juce;
 
-    auto bounds = Rectangle<float>(x, y, width, height);
-    bounds = bounds * JUCE_LIVE_CONSTANT(0.975); // fix this properly to adjust for window width/height, just reducing it to fit valuearc...
+    auto yOffset = JUCE_LIVE_CONSTANT(10);
+    auto bounds = Rectangle<float>(x, y + yOffset, width, height);
 
     auto enabled = slider.isEnabled();
 
@@ -27,7 +27,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
 
     auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
     auto valueLineWidth = jmin(4.0f, width * 0.05f);
-    auto valueArcOuterRadius = (width * 0.5f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9); // value arc outside slider bounds, bigger than half the width
+    auto valueArcOuterRadius = (width * 0.55f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9); // value arc outside slider bounds, bigger than half the width
 
     Path backgroundArc;
     backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getCentreY(), valueArcOuterRadius, valueArcOuterRadius,
@@ -53,7 +53,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         Rectangle<float> r;
         r.setLeft(center.getX() - 3.5f);
         r.setRight(center.getX() + 3.5f);
-        r.setTop(bounds.getY() * JUCE_LIVE_CONSTANT(9)); // adjust to set the value line to fit inside reduced bounds
+        r.setTop((bounds.getY() + yOffset) * JUCE_LIVE_CONSTANT(1.2)); // adjust to set the value line to fit inside reduced bounds
         r.setBottom(center.getY() - rswl->getTextHeight() * 1.5);
 
         p.addRoundedRectangle(r, 2.f);
@@ -225,7 +225,8 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dualDelayButtonAttachment(audioProcessor.apvts, "Dual Delay", dualDelayButton),
     chorusButtonAttachment(audioProcessor.apvts, "Chorus", chorusButton),
     lowPassButtonAttachment(audioProcessor.apvts, "Low Pass", lowPassButton),
-    highPassButtonAttachment(audioProcessor.apvts, "High Pass", highPassButton)
+    highPassButtonAttachment(audioProcessor.apvts, "High Pass", highPassButton),
+    reverbButtonAttachment(audioProcessor.apvts, "Reverb", reverbButton)
 {
 
     delayTimeSliderLeft.setTextValueSuffix(" (ms)");
@@ -259,6 +260,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     chorusButton.setLookAndFeel(&lnf);
     lowPassButton.setLookAndFeel(&lnf);
     highPassButton.setLookAndFeel(&lnf);
+    reverbButton.setLookAndFeel(&lnf);
 
     int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 1100);
     int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 575);
@@ -268,7 +270,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     juce::Rectangle<int> r = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
     int x = r.getWidth();
     int y = r.getHeight();
-    setResizeLimits(420, 300, x, y);
+    setResizeLimits(475, 350, x, y);
 
     startTimer(500); // to update bpm
 }
@@ -279,6 +281,7 @@ DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
     chorusButton.setLookAndFeel(nullptr);
     lowPassButton.setLookAndFeel(nullptr);
     highPassButton.setLookAndFeel(nullptr);
+    reverbButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -299,6 +302,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     juce::Rectangle<int> chorusToggleButtonBounds = chorusButton.getBounds();
     juce::Rectangle<int> lowPassButtonBounds = lowPassButton.getBounds();
     juce::Rectangle<int> highPassButtonBounds = highPassButton.getBounds();
+    juce::Rectangle<int> reverbButtonBounds = reverbButton.getBounds();
 
     // g.setColour(juce::Colours::red);
     // g.drawRect(delayToggleButtonBounds); // just used for drawing bbox rects for ui layout
@@ -307,10 +311,15 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 
     delayTimeSliderLeftBounds.setY(delayTimeSliderLeftBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
     delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
+    delayTimeSliderLeftBounds.setX(delayTimeSliderLeftBounds.getX());
+    delayTimeSliderRightBounds.setX(delayTimeSliderRightBounds.getX());
     feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
     dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
+    feedbackSliderBounds.setX(feedbackSlider.getX());
+    dryWetBounds.setX(dryWetSlider.getX());
     delayToggleButtonBounds.setY(delayToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
     chorusToggleButtonBounds.setY(chorusToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
+    reverbButtonBounds.setY(reverbButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
     lowPassButtonBounds.setY(lowPassButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
     highPassButtonBounds.setY(highPassButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
 
@@ -322,6 +331,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText("Chorus", chorusToggleButtonBounds, juce::Justification::centred, 1);
     g.drawFittedText("Low Pass", lowPassButtonBounds, juce::Justification::centred, 1);
     g.drawFittedText("High Pass", highPassButtonBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Reverb", reverbButtonBounds, juce::Justification::centred, 1);
 }
 
 void DelayAudioProcessorEditor::resized()
@@ -345,16 +355,21 @@ void DelayAudioProcessorEditor::resized()
     float toggleButtonHeight = windowHeight * 0.10f;
     float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.4f);
     float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.6f);
+    float chorusButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.43f);
+    float reverbButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.57f);
     
     float dualButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.25f);
-    float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.45f);   
-    float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.45f); 
-    float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.7f);
+    float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.425f);   
+    float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.425f); 
+    float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.675f);
+    float reverbButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.675f);
 
     dualDelayButton.setBounds(windowWidth * 0.5f - toggleButtonWidth * 0.5f, dualButtonY, toggleButtonWidth, toggleButtonHeight);
     lowPassButton.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
     highPassButton.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
-    chorusButton.setBounds(windowWidth * 0.5f - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
+    chorusButton.setBounds(chorusButtonX - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
+    reverbButton.setBounds(reverbButtonX - toggleButtonWidth * 0.5f, reverbButtonY, toggleButtonWidth, toggleButtonHeight);
+    //chorusButton.setBounds(windowWidth * 0.5f - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
     bpmLabel.setBounds(dualDelayButton.getBounds().getCentreX() - 25, dualDelayButton.getBounds().getY() * 0.15, 100, 30);
 
     int width = getWidth();
@@ -385,6 +400,7 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &chorusButton,
     &lowPassButton,
     &highPassButton,
+    &reverbButton,
     &bpmLabel
   };
 }

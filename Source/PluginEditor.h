@@ -159,8 +159,8 @@ private:
     dryWetSliderAttachment;
 
     using ButtonAttachment = APVTS::ButtonAttachment;
-    EnableButton dualDelayButton, chorusButton, lowPassButton, highPassButton;
-    ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment, lowPassButtonAttachment, highPassButtonAttachment;
+    EnableButton dualDelayButton, chorusButton, lowPassButton, highPassButton, reverbButton;
+    ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment, lowPassButtonAttachment, highPassButtonAttachment, reverbButtonAttachment;
 
     BPMLabel bpmLabel;
     void updateBPMLabel();

@@ -154,6 +154,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smoothedLowPass.reset(currentSampleRate, 0.7f);
     smoothedHighPass.reset(currentSampleRate, 0.7f);
     smoothedChorus.reset(currentSampleRate, 77.7f);
+    smoothedReverb.reset(currentSampleRate, 0.7f);
 
     //== CIRCULAR BUFFER
     leftDelay->makeBuffer();
@@ -207,15 +208,16 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     bool chorus = chainsettings.chorus;
     bool lowPass = chainsettings.lowPass;
     bool highPass = chainsettings.highPass;
+    bool reverb = chainsettings.reverb;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
-    bool reverb = false;
 
     //== TOGGLE MIXES
-    toggleButtonStateMixes(lowPass, highPass, chorus);
+    toggleButtonStateMixes(lowPass, highPass, chorus, reverb);
     smoothedLowPass.setTargetValue(targetLowPassMix);
     smoothedHighPass.setTargetValue(targetHighPassMix);
     smoothedChorus.setTargetValue(targetChorusMix);
+    smoothedReverb.setTargetValue(targetReverbMix);
 
     //== SMOOTHING
     smoothedFeedback.setTargetValue(newFeedbackTime);
@@ -270,12 +272,10 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 leftDelay->updateWriteIndex();
 
                 //== REVERB
-                if (reverb)
-                {
-                    float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft, reverbAllPassLeft, inData[sample], dryWetLeft);
-                    combinedReverb /= (reverbDelaysLeft.size() / 2); // pseudo normalising
-                    outData[sample] += combinedReverb;
-                }
+                float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft, reverbAllPassLeft, inData[sample], dryWetLeft);
+                combinedReverb /= (reverbDelaysLeft.size() / 2); // pseudo normalising
+                currentReverbMix = smoothedReverb.getNextValue();       
+                outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
@@ -306,12 +306,10 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 rightDelay->updateWriteIndex();
 
                 //== REVERB
-                if (reverb)
-                {
-                    float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight, reverbAllPassRight, inData[sample], dryWetRight);
-                    combinedReverb /= (reverbDelaysRight.size() / 2); // pseudo normalising
-                    outData[sample] += combinedReverb;
-                }
+                float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight, reverbAllPassRight, inData[sample], dryWetRight);
+                combinedReverb /= (reverbDelaysRight.size() / 2); // pseudo normalising
+                currentReverbMix = smoothedReverb.getNextValue();       
+                outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
         }
     }
@@ -408,7 +406,7 @@ float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10
             reverbDecay -= 0.025f;
         }
 
-    return combinedReverb;
+    return combinedReverb;// * smoothedReverb.getCurrentValue();
 }
 
 float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float coefficient)
@@ -416,10 +414,11 @@ float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float c
     return next + ((next - current) * coefficient);
 }
 
-void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus) {
+void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb) {
     targetLowPassMix = lowPass ? 1.0f : 0.0f;
     targetHighPassMix = highPass ? 1.0f : 0.0f;
     targetChorusMix = chorus ? 1.0f : 0.0f;
+    targetReverbMix = reverb ? 1.0f : 0.0f;
 }
 
 float DelayAudioProcessor::setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet) 
@@ -452,6 +451,7 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.chorus = apvts.getRawParameterValue("Chorus")->load() > 0.5f;
     settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
     settings.highPass = apvts.getRawParameterValue("High Pass")->load() > 0.5f;
+    settings.reverb = apvts.getRawParameterValue("Reverb")->load() > 0.5f;
 
     return settings;
 }
@@ -474,6 +474,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>("Reverb", "Reverb", false));
 
     //params.push_back(std::make_unique<juce::AudioParameterChoice>("Divisions", "Divisions", noteStringArray, 0));
 

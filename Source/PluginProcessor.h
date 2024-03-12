@@ -12,6 +12,7 @@ struct ChainSettings {
 	bool chorus {false};
 	bool lowPass {false};
 	bool highPass {false};
+	bool reverb {false};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -83,19 +84,19 @@ private:
 					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass, 
 					  float sample, 
 					  float& dryWet);
-	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus);
+	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb);
 	float applyOnePoleFilter(float current, float next, float coefficient);
 	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
 
 	MonoChain leftChain, rightChain;
-	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus;
+	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus, smoothedReverb;
 
 	std::unique_ptr<DelayLine> leftDelay, rightDelay;
 	double currentSampleRate;
 
 	juce::dsp::IIR::Filter<float> leftLowPass, rightLowPass, leftHighPass, rightHighPass, leftLowAll, rightLowAll;
 	
-	float currentLowPassMix, targetLowPassMix, currentHighPassMix, targetHighPassMix, currentChorusMix, targetChorusMix = 0.f;
+	float currentLowPassMix, targetLowPassMix, currentHighPassMix, targetHighPassMix, targetChorusMix, currentReverbMix, targetReverbMix = 0.f;
 
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;
