@@ -10,9 +10,13 @@ struct ChainSettings {
 	float dryWet {0};
 	bool dualDelay {false};
 	bool chorus {false};
+	float chorusRate = {0.45f};
 	bool lowPass {false};
+	float lowPassFreq {2000};
+	float highPassFreq {500};
 	bool highPass {false};
 	bool reverb {false};
+	float reverbLevel {0};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
@@ -87,6 +91,8 @@ private:
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb);
 	float applyOnePoleFilter(float current, float next, float coefficient);
 	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
+	void DelayAudioProcessor::updateLowPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
+	void DelayAudioProcessor::updateHighPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
 
 	MonoChain leftChain, rightChain;
 	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus, smoothedReverb;
@@ -107,6 +113,8 @@ private:
 	float dryWet;
 	float dryWetLeft;
 	float dryWetRight;
+	float lastLowPassFreq;
+	float lastHighPassFreq;
 
 	float chorusRate = 0.45f; 
 	float chorusDepth = 0.75f;

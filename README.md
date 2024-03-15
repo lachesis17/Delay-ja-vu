@@ -12,6 +12,7 @@
 - [x] Lowpass / Highpass
 - [x] Fix popping on toggling Low/High pass
 - [x] Fix popping on toggling chorus & warping speeds from 0m/s ~~(tukey window)~~
+- [x] Filter coefficients, reverb level and chorus rate toggled with double-click slider
 - [ ] Ping Pong
 - [ ] Sync BPM
 - [ ] Add BPM divisions to time sliders (quarter, half etc.), needs to toggle with sync bpm state

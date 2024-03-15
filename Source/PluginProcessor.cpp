@@ -206,9 +206,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     float newDryWet = chainsettings.dryWet;
     bool dualDelay = chainsettings.dualDelay;
     bool chorus = chainsettings.chorus;
+    float newChorusRate = chainsettings.chorusRate;
     bool lowPass = chainsettings.lowPass;
+    float newLowPassFreq = chainsettings.lowPassFreq;
     bool highPass = chainsettings.highPass;
+    float newHighPassFreq = chainsettings.highPassFreq;
     bool reverb = chainsettings.reverb;
+    float reverbLevel = chainsettings.reverbLevel;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
 
@@ -218,6 +222,26 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     smoothedHighPass.setTargetValue(targetHighPassMix);
     smoothedChorus.setTargetValue(targetChorusMix);
     smoothedReverb.setTargetValue(targetReverbMix);
+
+    //== COEFFICENTS
+    if (newLowPassFreq != lastLowPassFreq)
+    {
+        updateLowPassFilter(leftLowPass, newLowPassFreq, currentSampleRate);
+        updateLowPassFilter(rightLowPass, newLowPassFreq, currentSampleRate);
+        lastLowPassFreq = newLowPassFreq;
+    }
+
+    if (newHighPassFreq != lastHighPassFreq)
+    {
+        updateHighPassFilter(leftHighPass, newHighPassFreq, currentSampleRate);
+        updateHighPassFilter(rightHighPass, newHighPassFreq, currentSampleRate);
+        lastHighPassFreq = newHighPassFreq;
+    }
+
+    if (newChorusRate != chorusRate)
+    {
+        chorusRate = newChorusRate;
+    }
 
     //== SMOOTHING
     smoothedFeedback.setTargetValue(newFeedbackTime);
@@ -272,7 +296,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 leftDelay->updateWriteIndex();
 
                 //== REVERB
-                float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft, reverbAllPassLeft, inData[sample], dryWetLeft);
+                float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft, reverbAllPassLeft, inData[sample], reverbLevel);
                 combinedReverb /= (reverbDelaysLeft.size() / 2); // pseudo normalising
                 currentReverbMix = smoothedReverb.getNextValue();       
                 outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
@@ -306,7 +330,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 rightDelay->updateWriteIndex();
 
                 //== REVERB
-                float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight, reverbAllPassRight, inData[sample], dryWetRight);
+                float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight, reverbAllPassRight, inData[sample], reverbLevel);
                 combinedReverb /= (reverbDelaysRight.size() / 2); // pseudo normalising
                 currentReverbMix = smoothedReverb.getNextValue();       
                 outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
@@ -386,7 +410,7 @@ float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10
                                        float sample,
                                        float& dryWet)
 {
-    float reverbDecay = 0.8f;
+    float reverbDecay = 0.9f;
     float combinedReverb = 0.0f;
 
     for (size_t i = 0; i < reverbDelays.size(); ++i)
@@ -403,7 +427,7 @@ float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10
             reverbDelays[i]->writeDelayBuffer(sample, reverbDecay, delayedReverbSample);
             combinedReverb += dryWet * delayedReverbSample;
             reverbDelays[i]->updateWriteIndex();
-            reverbDecay -= 0.025f;
+            reverbDecay -= 0.01f;
         }
 
     return combinedReverb;// * smoothedReverb.getCurrentValue();
@@ -425,6 +449,18 @@ float DelayAudioProcessor::setDryWetMix(float newDelayTime, float dryWet, float 
 {
     smoothedDryWet.setTargetValue(newDelayTime == 0.f ? 0.f : newDryWet);
     return applyOnePoleFilter(dryWet, smoothedDryWet.getNextValue(), newDelayTime == 0.f ? coeff_lrg : coeff_sml);
+}
+
+void DelayAudioProcessor::updateLowPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate)
+{
+    auto coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, frequency);
+    filter.coefficients = coefficients;
+}
+
+void DelayAudioProcessor::updateHighPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate)
+{
+    auto coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, frequency);
+    filter.coefficients = coefficients;
 }
 
 float DelayAudioProcessor::getCurrentBPM()
@@ -449,9 +485,13 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {
     settings.dryWet = apvts.getRawParameterValue("Dry Wet")->load();
     settings.dualDelay = apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
     settings.chorus = apvts.getRawParameterValue("Chorus")->load() > 0.5f;
+    settings.chorusRate = apvts.getRawParameterValue("Chorus Rate")->load();
     settings.lowPass = apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
+    settings.lowPassFreq = apvts.getRawParameterValue("Low Pass Freq")->load();
+    settings.highPassFreq = apvts.getRawParameterValue("High Pass Freq")->load();
     settings.highPass = apvts.getRawParameterValue("High Pass")->load() > 0.5f;
     settings.reverb = apvts.getRawParameterValue("Reverb")->load() > 0.5f;
+    settings.reverbLevel = apvts.getRawParameterValue("Reverb Level")->load();
 
     return settings;
 }
@@ -472,9 +512,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Dry Wet", "Dry Wet", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Dual Delay", "Dual Delay", false));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Chorus", "Chorus", false));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Chorus Rate", "Chorus Rate", juce::NormalisableRange<float>(0.1f, 3.f, 0.01f, 1.f), 0.45f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Low Pass Freq", "Low Pass Freq", juce::NormalisableRange<float>(20.f, 7000.f, 1.f, 0.25f), 2000.f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("High Pass Freq", "Low Pass Freq", juce::NormalisableRange<float>(20.f, 1000.f, 1.f, 0.25f), 500.f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Reverb", "Reverb", false));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("Reverb Level", "Reverb Level", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
 
     //params.push_back(std::make_unique<juce::AudioParameterChoice>("Divisions", "Divisions", noteStringArray, 0));
 

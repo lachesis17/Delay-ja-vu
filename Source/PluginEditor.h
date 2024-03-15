@@ -37,6 +37,7 @@ struct RotarySliderWithLabels : juce::Slider, juce::Timer
   suffix(unitSuffix)
   {
     setLookAndFeel(&lnf);
+    setComponentProperty("labelFontSize", labelFontSize);
   }
 
   ~RotarySliderWithLabels() // setLookAndFeel, unset with destructor
@@ -44,15 +45,7 @@ struct RotarySliderWithLabels : juce::Slider, juce::Timer
     setLookAndFeel(nullptr);
   }
 
-  struct LabelPos
-  {
-    float pos;
-    juce::String label;
-  };
-
-  juce::Array<LabelPos> labels;
-
-//=======================================
+  //=======================================
   float alpha = 1.0f;
   float targetAlpha = 0.0f;
   float animationSpeed = 0.04f;
@@ -71,17 +64,63 @@ void animateColor()
   }
 
   float getAlpha() const { return alpha; }
-//=======================================
+  //=======================================
+
+  struct LabelPos
+  {
+    float pos;
+    juce::String label;
+  };
+
+  juce::Array<LabelPos> labels;
 
   void paint(juce::Graphics& g) override;
   juce::Rectangle<int> getSliderBounds() const;
-  int getTextHeight() const { return 14; }
+  int getTextHeight() const { return 15.5f; }
   juce::String getDisplayString() const;
 private:
   RotaryLookAndFeel lnf; // Calling this "LookAndFeel" throws ambiguous symbol error as could be juce::LookAndFeel
+  float labelFontSize = 15.5f;
+
+  void setComponentProperty(const juce::Identifier& propertyName, float value)
+  {
+    getProperties().set(propertyName, value);
+  }
 
   juce::RangedAudioParameter* param;
   juce::String suffix;
+};
+
+//==============================================================================
+
+struct RotarySliderToggle : RotarySliderWithLabels {
+    RotarySliderToggle(juce::RangedAudioParameter& rap, const juce::String& unitSuffix,
+                       juce::AudioProcessorValueTreeState& apvts, const juce::String& paramId)
+    : RotarySliderWithLabels(rap, unitSuffix), apvts(apvts), paramId(paramId)
+    {
+      setComponentProperty("labelFontSize", labelFontSize);
+    }
+
+private:
+    juce::AudioProcessorValueTreeState& apvts;
+    juce::String paramId;
+    float labelFontSize = 12.0f;
+
+void setComponentProperty(const juce::Identifier& propertyName, float value)
+  {
+    getProperties().set(propertyName, value);
+  }
+
+void mouseDoubleClick(const juce::MouseEvent& event) override
+  {
+    RotarySliderWithLabels::mouseDoubleClick(event);
+
+    bool state = !isEnabled();
+    setEnabled(state);
+    animateColor();
+
+    apvts.getParameter(paramId)->setValueNotifyingHost(state ? 1.0f : 0.0f);
+  }
 };
 
 //==============================================================================
@@ -134,6 +173,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
   void DelayAudioProcessorEditor::timerCallback() { updateBPMLabel(); }
+  void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabels &slider);
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -142,6 +182,12 @@ private:
 
     const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
     // g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
+
+    RotarySliderToggle 
+    lowPassSlider,
+    highPassSlider,
+    chorusSlider,
+    reverbSlider;
 
     RotarySliderWithLabels
     delayTimeSliderLeft,
@@ -156,11 +202,15 @@ private:
     delayTimeSliderAttachmentLeft,
     delayTimeSliderAttachmentRight,
     feedbackSliderAttachment,
-    dryWetSliderAttachment;
+    dryWetSliderAttachment,
+    lowPassSliderAttachement,
+    highPassSliderAttachement,
+    chorusSliderAttachement,
+    reverbSliderAttachement;
 
     using ButtonAttachment = APVTS::ButtonAttachment;
-    EnableButton dualDelayButton, chorusButton, lowPassButton, highPassButton, reverbButton;
-    ButtonAttachment dualDelayButtonAttachment, chorusButtonAttachment, lowPassButtonAttachment, highPassButtonAttachment, reverbButtonAttachment;
+    EnableButton dualDelayButton;
+    ButtonAttachment dualDelayButtonAttachment;
 
     BPMLabel bpmLabel;
     void updateBPMLabel();
@@ -169,10 +219,6 @@ private:
     std::vector<juce::Component*> getComps();
 
     //juce::Image background; // just used for drawing bbox rects for ui layout
-
-    //juce::Slider delayTimeSlider; // add comps without subclass or lookandfeel
-    //std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> delayTimeSliderAttachment;
-    //juce::Label delayTimeLabelLeft;
 
     RotaryLookAndFeel lnf;
 
