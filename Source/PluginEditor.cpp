@@ -32,7 +32,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     Path backgroundArc;
     backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getCentreY(), valueArcOuterRadius, valueArcOuterRadius,
                                 0.0f, rotaryStartAngle, rotaryEndAngle, true);
-    g.setColour(Colour(63u, 72u, 204u).withMultipliedAlpha(JUCE_LIVE_CONSTANT(0.35)));
+    g.setColour(enabled ? Colour(63u, 72u, 204u).withMultipliedAlpha(JUCE_LIVE_CONSTANT(0.35)) : Colours::black);
     g.strokePath(backgroundArc, PathStrokeType(valueLineWidth, PathStrokeType::curved));
 
     Path valueArc;
@@ -216,29 +216,25 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p),
     delayTimeSliderLeft(*audioProcessor.apvts.getParameter("Delay Left"), "ms"),
     delayTimeSliderAttachmentLeft(audioProcessor.apvts, "Delay Left", delayTimeSliderLeft),
-    delayTimeSliderRight(*audioProcessor.apvts.getParameter("Delay Right"), "ms"),
+    delayTimeSliderRight(*audioProcessor.apvts.getParameter("Delay Right"), "ms", audioProcessor.apvts, "Dual Delay", 15.5f),
     delayTimeSliderAttachmentRight(audioProcessor.apvts, "Delay Right", delayTimeSliderRight),
     feedbackSlider(*audioProcessor.apvts.getParameter("Feedback"), ""),
     feedbackSliderAttachment(audioProcessor.apvts, "Feedback", feedbackSlider),
     dryWetSlider(*audioProcessor.apvts.getParameter("Dry Wet"), ""),
     dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider),
-    lowPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "Hz", audioProcessor.apvts, "Low Pass"),
+    lowPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "", audioProcessor.apvts, "Low Pass"),
     lowPassSliderAttachement(audioProcessor.apvts, "Low Pass Freq", lowPassSlider),
-    highPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "Hz", audioProcessor.apvts, "High Pass"),
+    highPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "", audioProcessor.apvts, "High Pass"),
     highPassSliderAttachement(audioProcessor.apvts, "High Pass Freq", highPassSlider),
     reverbSlider(*audioProcessor.apvts.getParameter("Reverb Level"), "", audioProcessor.apvts, "Reverb"),
     reverbSliderAttachement(audioProcessor.apvts, "Reverb Level", reverbSlider),
     chorusSlider(*audioProcessor.apvts.getParameter("Chorus Rate"), "", audioProcessor.apvts, "Chorus"),
-    chorusSliderAttachement(audioProcessor.apvts, "Chorus Rate", chorusSlider),
-    dualDelayButtonAttachment(audioProcessor.apvts, "Dual Delay", dualDelayButton)
+    chorusSliderAttachement(audioProcessor.apvts, "Chorus Rate", chorusSlider)
 {
-
-    delayTimeSliderLeft.setTextValueSuffix(" (ms)");
-    delayTimeSliderRight.setTextValueSuffix(" (ms)");
 
     bpmLabel.setText("120 BPM", juce::dontSendNotification);     //bpmLabel.onClick = [this] { this->updateBPMLabel(); };
 
-    bool dualDelayToggled = dualDelayButton.getToggleState(); // making sure its state and paint is correct on loading GUI outside of onClick event of togglebutton
+    bool dualDelayToggled = audioProcessor.apvts.getRawParameterValue("Dual Delay")->load() > 0.5f;
     setSliderState(dualDelayToggled, delayTimeSliderRight);
 
     bool lowPass = audioProcessor.apvts.getRawParameterValue("Low Pass")->load() > 0.5f;
@@ -253,25 +249,10 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     bool reverb = audioProcessor.apvts.getRawParameterValue("Reverb")->load() > 0.5f;
     setSliderState(reverb, reverbSlider);
 
-    auto safePtr = juce::Component::SafePointer<DelayAudioProcessorEditor>(this);
-    dualDelayButton.onClick = [safePtr]()
-    {
-        if (auto *comp = safePtr.getComponent())
-        {
-            auto dualDelayState = comp->dualDelayButton.getToggleState();
-            
-            comp->delayTimeSliderRight.setEnabled(dualDelayState);
-            comp->delayTimeSliderRight.animateColor();
-            comp->dualDelayButton.animateColor();
-        }
-    };
-
     for( auto* comp: getComps())
     {
         addAndMakeVisible(comp);
     }
-
-    dualDelayButton.setLookAndFeel(&lnf);
 
     int width = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowWidth", 1100);
     int height = audioProcessor.getAppProperties().getUserSettings()->getIntValue("WindowHeight", 575);
@@ -288,7 +269,6 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
 
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
 {
-    dualDelayButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -305,14 +285,13 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     juce::Rectangle<int> delayTimeSliderRightBounds = delayTimeSliderRight.getBounds();
     juce::Rectangle<int> feedbackSliderBounds = feedbackSlider.getBounds();
     juce::Rectangle<int> dryWetBounds = dryWetSlider.getBounds();
-    juce::Rectangle<int> delayToggleButtonBounds = dualDelayButton.getBounds();
-    juce::Rectangle<int> chorusToggleButtonBounds = chorusSlider.getBounds();
-    juce::Rectangle<int> lowPassButtonBounds = lowPassSlider.getBounds();
-    juce::Rectangle<int> highPassButtonBounds = highPassSlider.getBounds();
-    juce::Rectangle<int> reverbButtonBounds = reverbSlider.getBounds();
+    juce::Rectangle<int> chorusLabelBounds = chorusSlider.getSliderBounds();
+    juce::Rectangle<int> lowPassLabelBounds = lowPassSlider.getSliderBounds();
+    juce::Rectangle<int> highPassLabelBounds = highPassSlider.getSliderBounds();
+    juce::Rectangle<int> reverbLabelBounds = reverbSlider.getSliderBounds();
 
     // g.setColour(juce::Colours::red);
-    // g.drawRect(delayToggleButtonBounds); // just used for drawing bbox rects for ui layout
+    // g.drawRect(dryWetBounds); // just used for drawing bbox rects for ui layout
 
     float windowHeight = static_cast<float>(getHeight());
 
@@ -324,21 +303,24 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
     feedbackSliderBounds.setX(feedbackSlider.getX());
     dryWetBounds.setX(dryWetSlider.getX());
-    delayToggleButtonBounds.setY(delayToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.1f));
-    chorusToggleButtonBounds.setY(chorusToggleButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
-    reverbButtonBounds.setY(reverbButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
-    lowPassButtonBounds.setY(lowPassButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
-    highPassButtonBounds.setY(highPassButtonBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(0.1f));
+
+    chorusLabelBounds.setX(chorusSlider.getBounds().getCentreX() - (chorusLabelBounds.getWidth() / 2));
+    chorusLabelBounds.setY(chorusSlider.getBounds().getY() + (chorusLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
+    lowPassLabelBounds.setX(lowPassSlider.getBounds().getCentreX() - (lowPassLabelBounds.getWidth() / 2));
+    lowPassLabelBounds.setY(lowPassSlider.getBounds().getY() + (lowPassLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
+    highPassLabelBounds.setX(highPassSlider.getBounds().getCentreX() - (highPassLabelBounds.getWidth() / 2));
+    highPassLabelBounds.setY(highPassSlider.getBounds().getY() + (highPassLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
+    reverbLabelBounds.setX(reverbSlider.getBounds().getCentreX() - (reverbLabelBounds.getWidth() / 2));
+    reverbLabelBounds.setY(reverbSlider.getBounds().getY() + (reverbLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
 
     g.drawFittedText("Delay Time Left", delayTimeSliderLeftBounds, juce::Justification::centred, 1);
     g.drawFittedText("Delay Time Right", delayTimeSliderRightBounds, juce::Justification::centred, 1);
     g.drawFittedText("Feedback", feedbackSliderBounds, juce::Justification::centred, 1);
     g.drawFittedText("Dry / Wet", dryWetBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Single / Dual", delayToggleButtonBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Chorus", chorusToggleButtonBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Low Pass", lowPassButtonBounds, juce::Justification::centred, 1);
-    g.drawFittedText("High Pass", highPassButtonBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Reverb", reverbButtonBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Chorus", chorusLabelBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Low Pass", lowPassLabelBounds, juce::Justification::centred, 1);
+    g.drawFittedText("High Pass", highPassLabelBounds, juce::Justification::centred, 1);
+    g.drawFittedText("Reverb", reverbLabelBounds, juce::Justification::centred, JUCE_LIVE_CONSTANT(1));
 }
 
 void DelayAudioProcessorEditor::resized()
@@ -353,30 +335,29 @@ void DelayAudioProcessorEditor::resized()
     float windowHeight = static_cast<float>(getHeight());
     float windowWidth = static_cast<float>(getWidth());
 
-    delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.33f)));
-    delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.5f)));
+    delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.3f)));
+    delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.43f)));
     feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
     dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
 
     float toggleButtonWidth = windowWidth * JUCE_LIVE_CONSTANT(0.15f);
-    float toggleButtonHeight = windowHeight * JUCE_LIVE_CONSTANT(0.2f);
+    float toggleButtonHeight = windowHeight * JUCE_LIVE_CONSTANT(0.24f);
     float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.4f);
     float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.6f);
-    float chorusButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.43f);
-    float reverbButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.57f);
+    float chorusButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.42f);
+    float reverbButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.58f);
     
-    float dualButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.25f);
-    float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.425f);   
-    float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.425f); 
-    float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.675f);
-    float reverbButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.675f);
+    float bpmY = windowHeight * JUCE_LIVE_CONSTANT(0.25f);
+    float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);   
+    float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f); 
+    float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
+    float reverbButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
 
-    dualDelayButton.setBounds(windowWidth * 0.5f - toggleButtonWidth * 0.5f, dualButtonY, toggleButtonWidth, toggleButtonHeight);
     lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
     highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
     chorusSlider.setBounds(chorusButtonX - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
     reverbSlider.setBounds(reverbButtonX - toggleButtonWidth * 0.5f, reverbButtonY, toggleButtonWidth, toggleButtonHeight);
-    bpmLabel.setBounds(dualDelayButton.getBounds().getCentreX() - 25, dualDelayButton.getBounds().getY() * 0.15, 100, 30);
+    bpmLabel.setBounds((windowWidth * 0.5f) - 25, bpmY * 0.15, 100, 30);
 
     int width = getWidth();
     int height = getHeight();
@@ -388,6 +369,7 @@ void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabel
 {
     slider.setEnabled(state);
     slider.animateColor();
+    slider.setDoubleClickReturnValue(false, 0);
 }
 
 void DelayAudioProcessorEditor::updateBPMLabel()
@@ -408,7 +390,6 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &delayTimeSliderRight,
     &feedbackSlider,
     &dryWetSlider,
-    &dualDelayButton,
     &chorusSlider,
     &lowPassSlider,
     &highPassSlider,

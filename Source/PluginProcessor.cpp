@@ -171,11 +171,13 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     rightDelay->resetSmoothedValue(0.7f);
     smoothedFeedback.reset(currentSampleRate, 0.005f);
     smoothedDryWet.reset(currentSampleRate, 0.005f);
-    smoothedLowPass.reset(currentSampleRate, 0.7f);
-    smoothedHighPass.reset(currentSampleRate, 0.7f);
+    smoothedLowPassMix.reset(currentSampleRate, 0.7f);
+    smoothedHighPassMix.reset(currentSampleRate, 0.7f);
     smoothedChorus.reset(currentSampleRate, 77.7f);
     smoothedReverb.reset(currentSampleRate, 0.7f);
     smoothedReverbLevel.reset(currentSampleRate, 0.005f);
+    smoothedLowPassFreq.reset(currentSampleRate, 0.005f);
+    smoothedHighPassFreq.reset(currentSampleRate, 0.005f);
 
     //== CIRCULAR BUFFER
     leftDelay->makeBuffer();
@@ -239,14 +241,16 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     //== TOGGLE MIXES
     toggleButtonStateMixes(lowPass, highPass, chorus, reverb);
-    smoothedLowPass.setTargetValue(targetLowPassMix);
-    smoothedHighPass.setTargetValue(targetHighPassMix);
+    smoothedLowPassMix.setTargetValue(targetLowPassMix);
+    smoothedHighPassMix.setTargetValue(targetHighPassMix);
     smoothedChorus.setTargetValue(targetChorusMix);
     smoothedReverb.setTargetValue(targetReverbMix);
 
     //== COEFFICENTS
     if (newLowPassFreq != lastLowPassFreq)
     {
+        smoothedLowPassFreq.setTargetValue(newLowPassFreq);
+        newLowPassFreq = applyOnePoleFilter(smoothedLowPassFreq.getCurrentValue(), smoothedLowPassFreq.getNextValue(), coeff);
         updateLowPassFilter(leftLowPass, newLowPassFreq, currentSampleRate);
         updateLowPassFilter(rightLowPass, newLowPassFreq, currentSampleRate);
         lastLowPassFreq = newLowPassFreq;
@@ -254,6 +258,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
 
     if (newHighPassFreq != lastHighPassFreq)
     {
+        smoothedHighPassFreq.setTargetValue(newHighPassFreq);
+        newHighPassFreq = applyOnePoleFilter(smoothedHighPassFreq.getCurrentValue(), smoothedHighPassFreq.getNextValue(), coeff);
         updateHighPassFilter(leftHighPass, newHighPassFreq, currentSampleRate);
         updateHighPassFilter(rightHighPass, newHighPassFreq, currentSampleRate);
         lastHighPassFreq = newHighPassFreq;
@@ -301,12 +307,12 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float delayedSample = leftDelay->readBufferDelayedSample();
 
                 //== LOW PASS
-                currentLowPassMix = smoothedLowPass.getNextValue();
+                currentLowPassMix = smoothedLowPassMix.getNextValue();
                 float lowPassSample = leftLowPass.processSample(delayedSample);          
                 delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
                 //== HIGH PASS
-                currentHighPassMix = smoothedHighPass.getNextValue();
+                currentHighPassMix = smoothedHighPassMix.getNextValue();
                 float highPassSample = leftHighPass.processSample(delayedSample);          
                 delayedSample = (1.0f - currentHighPassMix) * delayedSample + currentHighPassMix * highPassSample;
 
@@ -337,12 +343,12 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float delayedSample = rightDelay->readBufferDelayedSample();
 
                 //== LOW PASS
-                currentLowPassMix = smoothedLowPass.getNextValue(); 
+                currentLowPassMix = smoothedLowPassMix.getNextValue(); 
                 float lowPassSample = rightLowPass.processSample(delayedSample);  
                 delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
                 //== HIGH PASS
-                currentHighPassMix = smoothedHighPass.getNextValue(); 
+                currentHighPassMix = smoothedHighPassMix.getNextValue(); 
                 float highPassSample = rightHighPass.processSample(delayedSample);  
                 delayedSample = (1.0f - currentHighPassMix) * delayedSample + currentHighPassMix * highPassSample;
 
@@ -453,12 +459,12 @@ float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10
 
             float delayedReverbSample = reverbDelays[i]->readBufferDelayedSample();
 
-            delayedReverbSample = reverbLowPass[i].processSample(delayedReverbSample);
             delayedReverbSample = reverbAllPass1[i].processSample(delayedReverbSample);
             delayedReverbSample = reverbAllPass2[i].processSample(delayedReverbSample);
             delayedReverbSample = reverbAllPass3[i].processSample(delayedReverbSample);
             delayedReverbSample = reverbAllPass4[i].processSample(delayedReverbSample);
             delayedReverbSample = reverbAllPass5[i].processSample(delayedReverbSample);
+            delayedReverbSample = reverbLowPass[i].processSample(delayedReverbSample);
 
             reverbDelays[i]->writeDelayBuffer(sample, reverbDecay, delayedReverbSample);
             combinedReverb += dryWet * delayedReverbSample;

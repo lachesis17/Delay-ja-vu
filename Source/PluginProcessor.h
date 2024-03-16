@@ -99,7 +99,8 @@ private:
 	void DelayAudioProcessor::updateHighPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
 
 	MonoChain leftChain, rightChain;
-	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus, smoothedReverb, smoothedReverbLevel;
+	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPassMix, smoothedHighPassMix, smoothedChorus, smoothedReverb, smoothedReverbLevel,
+									 smoothedLowPassFreq, smoothedHighPassFreq;
 
 	std::unique_ptr<DelayLine> leftDelay, rightDelay;
 	double currentSampleRate;

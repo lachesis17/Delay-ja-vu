@@ -95,8 +95,8 @@ private:
 
 struct RotarySliderToggle : RotarySliderWithLabels {
     RotarySliderToggle(juce::RangedAudioParameter& rap, const juce::String& unitSuffix,
-                       juce::AudioProcessorValueTreeState& apvts, const juce::String& paramId)
-    : RotarySliderWithLabels(rap, unitSuffix), apvts(apvts), paramId(paramId)
+                       juce::AudioProcessorValueTreeState& apvts, const juce::String& paramId, float labelFontSize = 12.5f)
+    : RotarySliderWithLabels(rap, unitSuffix), apvts(apvts), paramId(paramId), labelFontSize(labelFontSize)
     {
       setComponentProperty("labelFontSize", labelFontSize);
     }
@@ -104,7 +104,7 @@ struct RotarySliderToggle : RotarySliderWithLabels {
 private:
     juce::AudioProcessorValueTreeState& apvts;
     juce::String paramId;
-    float labelFontSize = 12.0f;
+    float labelFontSize = 12.5f;
 
 void setComponentProperty(const juce::Identifier& propertyName, float value)
   {
@@ -183,7 +183,8 @@ private:
     const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
     // g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
 
-    RotarySliderToggle 
+    RotarySliderToggle
+    delayTimeSliderRight,
     lowPassSlider,
     highPassSlider,
     chorusSlider,
@@ -191,7 +192,6 @@ private:
 
     RotarySliderWithLabels
     delayTimeSliderLeft,
-    delayTimeSliderRight,
     feedbackSlider,
     dryWetSlider;
 
@@ -208,9 +208,9 @@ private:
     chorusSliderAttachement,
     reverbSliderAttachement;
 
-    using ButtonAttachment = APVTS::ButtonAttachment;
-    EnableButton dualDelayButton;
-    ButtonAttachment dualDelayButtonAttachment;
+    // using ButtonAttachment = APVTS::ButtonAttachment; // don't need buttons with double-click sliders, but save for later
+    // EnableButton dualDelayButton;
+    // ButtonAttachment dualDelayButtonAttachment;
 
     BPMLabel bpmLabel;
     void updateBPMLabel();
