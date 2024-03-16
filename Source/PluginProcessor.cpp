@@ -415,9 +415,10 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, DelayL
 {
     chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
     chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
-    if (chorusPhase > 2.0 * juce::MathConstants<float>::pi)
+    chorusPhase = std::fmod(chorusPhase, 2.0 * juce::MathConstants<float>::pi);
+    if (chorusPhase < 0)
     {
-        chorusPhase -= 2.0 * juce::MathConstants<float>::pi;
+        chorusPhase += 2.0 * juce::MathConstants<float>::pi;
     }
 
     if (newDelayTime != delayLine.getSmoothedCurrent() && newDelayTime != 0.f) 
