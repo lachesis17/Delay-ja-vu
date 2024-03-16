@@ -113,7 +113,7 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 10000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowReverb = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 777);  
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowReverb = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 1277);  
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass1 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 1000);
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass2 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 2000);
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass3 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 3000);
@@ -329,7 +329,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float combinedReverb = applyReverb(reverbDelaysLeft, reverbLowPassLeft,
                                                    reverbAllPassLeft1, reverbAllPassLeft2, reverbAllPassLeft3, reverbAllPassLeft4, reverbAllPassLeft5,
                                                    inData[sample], reverbLevel);
-                combinedReverb /= (reverbDelaysLeft.size() / 2); // pseudo normalising
+                float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5;
+                combinedReverb = wetReverb * outData[sample] + reverbLevel * combinedReverb;
                 currentReverbMix = smoothedReverb.getNextValue();       
                 outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
@@ -365,7 +366,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
                 float combinedReverb = applyReverb(reverbDelaysRight, reverbLowPassRight,
                                                    reverbAllPassRight1, reverbAllPassRight2, reverbAllPassRight3, reverbAllPassRight4, reverbAllPassRight5,
                                                    inData[sample], reverbLevel);
-                combinedReverb /= (reverbDelaysRight.size() / 2); // pseudo normalising
+                float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5;
+                combinedReverb = wetReverb * outData[sample] + reverbLevel * combinedReverb;
                 currentReverbMix = smoothedReverb.getNextValue();       
                 outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
