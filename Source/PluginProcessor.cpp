@@ -112,8 +112,8 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 10000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowReverb = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 1277);  
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 7000);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowReverb = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 3277);  
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass1 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 1000);
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass2 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 2000);
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass3 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 3000);
@@ -175,9 +175,9 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     smoothedHighPassMix.reset(currentSampleRate, 0.7f);
     smoothedChorus.reset(currentSampleRate, 77.7f);
     smoothedReverb.reset(currentSampleRate, 0.7f);
-    smoothedReverbLevel.reset(currentSampleRate, 0.005f);
-    smoothedLowPassFreq.reset(currentSampleRate, 0.005f);
-    smoothedHighPassFreq.reset(currentSampleRate, 0.005f);
+    smoothedReverbLevel.reset(currentSampleRate, 0.0075f);
+    smoothedLowPassFreq.reset(currentSampleRate, 0.0075f);
+    smoothedHighPassFreq.reset(currentSampleRate, 0.0075f);
 
     //== CIRCULAR BUFFER
     leftDelay->makeBuffer();
