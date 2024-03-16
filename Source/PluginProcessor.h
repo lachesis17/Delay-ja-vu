@@ -84,8 +84,12 @@ private:
 
 	float applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime);
 	float applyReverb(std::array<std::unique_ptr<DelayLine>, 10>& reverbDelays,
-					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbLowPass, 
-					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass, 
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbLowPass,  
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass1, 
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass2,
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass3,
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass4,
+					  std::array<juce::dsp::IIR::Filter<float>, 10>& reverbAllPass5,
 					  float sample, 
 					  float& dryWet);
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb);
@@ -95,7 +99,7 @@ private:
 	void DelayAudioProcessor::updateHighPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
 
 	MonoChain leftChain, rightChain;
-	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus, smoothedReverb;
+	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPass, smoothedHighPass, smoothedChorus, smoothedReverb, smoothedReverbLevel;
 
 	std::unique_ptr<DelayLine> leftDelay, rightDelay;
 	double currentSampleRate;
@@ -115,6 +119,7 @@ private:
 	float dryWetRight;
 	float lastLowPassFreq;
 	float lastHighPassFreq;
+	float reverbLevel;
 
 	float chorusRate = 0.45f; 
 	float chorusDepth = 0.75f;
@@ -127,8 +132,16 @@ private:
 	const std::array<float, 10> fixedDelayTimesRight = {43.0f, 64.0f, 72.0f, 89.0f, 101.0f, 117.0f, 125.0f, 130.0f, 142.0f, 158.0f};
 	std::array<juce::dsp::IIR::Filter<float>, 10> reverbLowPassLeft;
 	std::array<juce::dsp::IIR::Filter<float>, 10> reverbLowPassRight;
-	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft;
-	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft1;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight1;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft2;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight2;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft3;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight3;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft4;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight4;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft5;
+	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassRight5;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
