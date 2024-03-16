@@ -45,6 +45,13 @@ struct RotarySliderWithLabels : juce::Slider, juce::Timer
     setLookAndFeel(nullptr);
   }
 
+void setSliderEnabled(bool state)
+{
+  sliderEnabled = state;
+}
+
+bool getSliderState() { return sliderEnabled; }
+
   //=======================================
   float alpha = 1.0f;
   float targetAlpha = 0.0f;
@@ -52,7 +59,7 @@ struct RotarySliderWithLabels : juce::Slider, juce::Timer
 
 void animateColor()
   {
-    targetAlpha = isEnabled() ? 1.0f : 0.0f;
+    targetAlpha = getSliderState() ? 1.0f : 0.0f;
     startTimerHz(120);
   }
 
@@ -81,6 +88,7 @@ void animateColor()
 private:
   RotaryLookAndFeel lnf; // Calling this "LookAndFeel" throws ambiguous symbol error as could be juce::LookAndFeel
   float labelFontSize = 15.5f;
+  bool sliderEnabled = true;
 
   void setComponentProperty(const juce::Identifier& propertyName, float value)
   {
@@ -115,11 +123,10 @@ void mouseDoubleClick(const juce::MouseEvent& event) override
   {
     RotarySliderWithLabels::mouseDoubleClick(event);
 
-    bool state = !isEnabled();
-    setEnabled(state);
-    animateColor();
-
+    bool state = !getSliderState();
     apvts.getParameter(paramId)->setValueNotifyingHost(state ? 1.0f : 0.0f);
+    setSliderEnabled(state);
+    animateColor();
   }
 };
 

@@ -9,11 +9,11 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     auto yOffset = JUCE_LIVE_CONSTANT(10);
     auto bounds = Rectangle<float>(x, y + yOffset, width, height);
 
-    auto enabled = slider.isEnabled();
+    auto enabled = dynamic_cast<RotarySliderToggle*>(&slider) ? dynamic_cast<RotarySliderToggle*>(&slider)->getSliderState() : true;
 
     auto enabledGradient = getSliderGradient(width, height, true);
     auto disabledGradient = getSliderGradient(width, height, false);
-    float alpha = dynamic_cast<RotarySliderWithLabels*>(&slider) ? dynamic_cast<RotarySliderWithLabels*>(&slider)->getAlpha() : 1.0f;
+    float alpha = dynamic_cast<RotarySliderToggle*>(&slider) ? dynamic_cast<RotarySliderToggle*>(&slider)->getAlpha() : 1.0f;
 
     ColourGradient currentGradient;
     for (int i = 0; i < enabledGradient.getNumColours(); ++i)
@@ -367,7 +367,7 @@ void DelayAudioProcessorEditor::resized()
 
 void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabels &slider)
 {
-    slider.setEnabled(state);
+    slider.setSliderEnabled(state);
     slider.animateColor();
     slider.setDoubleClickReturnValue(false, 0);
 }
