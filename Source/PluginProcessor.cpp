@@ -95,9 +95,6 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     const juce::dsp::ProcessSpec spec{sampleRate, static_cast<juce::uint32>(samplesPerBlock), 2};
 
-    leftChain.prepare(spec);
-    rightChain.prepare(spec);
-
     currentSampleRate = getSampleRate();
     leftDelay = std::make_unique<DelayLine>(currentSampleRate);
     rightDelay = std::make_unique<DelayLine>(currentSampleRate);
@@ -373,14 +370,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
             }
         }
     }
-
-    juce::dsp::AudioBlock<float> block(buffer);
-    auto leftBlock = block.getSingleChannelBlock(0);
-    auto rightBlock = block.getSingleChannelBlock(1);
-    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
-    leftChain.process(leftContext);
-    rightChain.process(rightContext);
 }
 
 //==============================================================================
@@ -483,7 +472,8 @@ float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float c
     return next + ((next - current) * coefficient);
 }
 
-void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb) {
+void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb)
+{
     targetLowPassMix = lowPass ? 1.0f : 0.0f;
     targetHighPassMix = highPass ? 1.0f : 0.0f;
     targetChorusMix = chorus ? 1.0f : 0.0f;
@@ -513,11 +503,13 @@ float DelayAudioProcessor::getCurrentBPM()
     AudioPlayHead* playHead = getPlayHead();
     AudioPlayHead::CurrentPositionInfo positionInfo;
 
-    if (playHead && playHead->getCurrentPosition(positionInfo)) {
-        if (positionInfo.bpm > 0) {
+    if (playHead && playHead->getCurrentPosition(positionInfo))
+    {
+        if (positionInfo.bpm > 0)
+        {
             return positionInfo.bpm;
-            }
         }
+    }
     return 120.0f;
 }
 

@@ -24,6 +24,6 @@
 - [ ] Tape decay with drive/detune
 - [ ] Reverse (final boss)
 
-https://github.com/lachesis17/Delay-ja-vu/assets/78860436/6cab2aaa-41b1-4664-89bb-6c3fe3305a3e
+https://github.com/lachesis17/Delay-ja-vu/assets/78860436/a0a78ab2-b4ae-4e18-bae7-e095366699a0
 
 _Copyright (c) 2023-2024, lachesis17 - All rights reserved._

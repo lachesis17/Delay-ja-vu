@@ -21,12 +21,6 @@ struct ChainSettings {
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts);
 
-using Filter = juce::dsp::IIR::Filter<float>;
-
-using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
-
-using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>;
-
 //==============================================================================
 
 class DelayAudioProcessor  : public juce::AudioProcessor
@@ -35,46 +29,46 @@ class DelayAudioProcessor  : public juce::AudioProcessor
                             #endif
 {
 public:
-    //==============================================================================
-    DelayAudioProcessor();
-    ~DelayAudioProcessor() override;
+	//==============================================================================
+	DelayAudioProcessor();
+	~DelayAudioProcessor() override;
 
-    //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void releaseResources() override;
+	//==============================================================================
+	void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+	void releaseResources() override;
 
-   #ifndef JucePlugin_PreferredChannelConfigurations
-    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
-   #endif
+	#ifndef JucePlugin_PreferredChannelConfigurations
+	bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+	#endif
 
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+	void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
-    //==============================================================================
-    juce::AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
+	//==============================================================================
+	juce::AudioProcessorEditor* createEditor() override;
+	bool hasEditor() const override;
 
-    //==============================================================================
-    const juce::String getName() const override;
+	//==============================================================================
+	const juce::String getName() const override;
 
-    bool acceptsMidi() const override;
-    bool producesMidi() const override;
-    bool isMidiEffect() const override;
-    double getTailLengthSeconds() const override;
+	bool acceptsMidi() const override;
+	bool producesMidi() const override;
+	bool isMidiEffect() const override;
+	double getTailLengthSeconds() const override;
 
-    //==============================================================================
-    int getNumPrograms() override;
-    int getCurrentProgram() override;
-    void setCurrentProgram (int index) override;
-    const juce::String getProgramName (int index) override;
-    void changeProgramName (int index, const juce::String& newName) override;
+	//==============================================================================
+	int getNumPrograms() override;
+	int getCurrentProgram() override;
+	void setCurrentProgram (int index) override;
+	const juce::String getProgramName (int index) override;
+	void changeProgramName (int index, const juce::String& newName) override;
 
-    //==============================================================================
-    void getStateInformation (juce::MemoryBlock& destData) override;
-    void setStateInformation (const void* data, int sizeInBytes) override;
+	//==============================================================================
+	void getStateInformation (juce::MemoryBlock& destData) override;
+	void setStateInformation (const void* data, int sizeInBytes) override;
 
-    // custom layout
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
-    juce::AudioProcessorValueTreeState apvts;
+	// custom layout
+	juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+	juce::AudioProcessorValueTreeState apvts;
 
 	ApplicationProperties& getAppProperties() { return appProperties; }
 	float getCurrentBPM();
@@ -98,7 +92,6 @@ private:
 	void DelayAudioProcessor::updateLowPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
 	void DelayAudioProcessor::updateHighPassFilter(juce::dsp::IIR::Filter<float>& filter, float frequency, double sampleRate);
 
-	MonoChain leftChain, rightChain;
 	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPassMix, smoothedHighPassMix, smoothedChorus, smoothedReverb, smoothedReverbLevel,
 									 smoothedLowPassFreq, smoothedHighPassFreq;
 
