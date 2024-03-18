@@ -564,7 +564,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout DelayAudioProcessor::createP
     params.push_back(std::make_unique<juce::AudioParameterBool>("Low Pass", "Low Pass", false));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Low Pass Freq", "Low Pass Freq", juce::NormalisableRange<float>(20.f, 7000.f, 1.f, 0.25f), 2000.f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("High Pass", "High Pass", false));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("High Pass Freq", "Low Pass Freq", juce::NormalisableRange<float>(20.f, 1000.f, 1.f, 0.25f), 500.f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("High Pass Freq", "High Pass Freq", juce::NormalisableRange<float>(20.f, 1000.f, 1.f, 0.25f), 500.f));
     params.push_back(std::make_unique<juce::AudioParameterBool>("Reverb", "Reverb", false));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("Reverb Level", "Reverb Level", juce::NormalisableRange<float>(0.f, 1.f, 0.02f, 1.f), 0.5f));
 

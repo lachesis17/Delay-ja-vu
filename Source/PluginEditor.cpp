@@ -224,7 +224,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     dryWetSliderAttachment(audioProcessor.apvts, "Dry Wet", dryWetSlider),
     lowPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "", audioProcessor.apvts, "Low Pass"),
     lowPassSliderAttachement(audioProcessor.apvts, "Low Pass Freq", lowPassSlider),
-    highPassSlider(*audioProcessor.apvts.getParameter("Low Pass Freq"), "", audioProcessor.apvts, "High Pass"),
+    highPassSlider(*audioProcessor.apvts.getParameter("High Pass Freq"), "", audioProcessor.apvts, "High Pass"),
     highPassSliderAttachement(audioProcessor.apvts, "High Pass Freq", highPassSlider),
     reverbSlider(*audioProcessor.apvts.getParameter("Reverb Level"), "", audioProcessor.apvts, "Reverb"),
     reverbSliderAttachement(audioProcessor.apvts, "Reverb Level", reverbSlider),
