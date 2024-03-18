@@ -111,11 +111,11 @@ void DelayAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 7000);
     juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowReverb = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 3277);  
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass1 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 1000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass2 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 2000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass3 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 3000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass4 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 4000);
-    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass5 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 5000);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass1 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 500, 0.6f);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass2 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 1500, 0.7f);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass3 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 2500, 0.75f);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass4 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 4000, 0.8f);
+    juce::dsp::IIR::Coefficients<float>::Ptr coefficientsAllPass5 = juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, 5000, 0.9f);
 
     leftLowPass.coefficients = coefficientsLow;
     rightLowPass.coefficients = coefficientsLow;
@@ -443,12 +443,23 @@ float DelayAudioProcessor::applyReverb(std::array<std::unique_ptr<DelayLine>, 10
     float reverbDecay = 0.9f;
     float combinedReverb = 0.0f;
 
+    //== LFO
+    reverbModPhase += (2.0 * juce::MathConstants<float>::pi * reverbModRate) / currentSampleRate;
+    reverbModPhase = std::fmod(reverbModPhase, 2.0 * juce::MathConstants<float>::pi);
+    if (reverbModPhase < 0)
+    {
+        reverbModPhase += 2.0 * juce::MathConstants<float>::pi;
+    }
+    float lfo = std::sin(reverbModPhase);
+    float modDepthInSamples = (reverbModDepth / 1000.0f) * static_cast<float>(currentSampleRate);
+    float modAmount = lfo * modDepthInSamples; 
+
     for (size_t i = 0; i < reverbDelays.size(); ++i)
         {
             float reverb = reverbDelays[i]->getCurrentDelayTime();
+            reverb += modAmount;
             reverb = applyOnePoleFilter(reverb, reverbDelays[i]->getSmoothedNext(), coeff_sml);
             reverbDelays[i]->updateDelayTime(reverb);
-
             float delayedReverbSample = reverbDelays[i]->readBufferDelayedSample();
 
             delayedReverbSample = reverbAllPass1[i].processSample(delayedReverbSample);

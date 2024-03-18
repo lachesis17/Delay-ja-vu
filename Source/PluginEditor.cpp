@@ -326,38 +326,67 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 void DelayAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(JUCE_LIVE_CONSTANT(50));
-
     auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
-    auto delayAreaTop = delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
+    delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
     auto feedbackArea = delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f));
-    auto toggleArea = bounds;
-
-    float windowHeight = static_cast<float>(getHeight());
-    float windowWidth = static_cast<float>(getWidth());
-
-    delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.3f)));
-    delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.43f)));
     feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
     dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
 
-    float toggleButtonWidth = windowWidth * JUCE_LIVE_CONSTANT(0.15f);
+    float windowHeight = static_cast<float>(getHeight());
+    float windowWidth = static_cast<float>(getWidth());
     float toggleButtonHeight = windowHeight * JUCE_LIVE_CONSTANT(0.24f);
-    float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.4f);
-    float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.6f);
+    float toggleButtonWidth = windowWidth * JUCE_LIVE_CONSTANT(0.15f);
+
+    if (windowHeight >= windowWidth) //== shitty responsiveness attempt
+    {
+        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.38f)));
+        delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.61f)));
+        float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.42f);
+        float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.58f);
+        float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.375f);
+        float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.375f);
+
+        lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
+        float lowPassHeight = lowPassSlider.getSliderBounds().getHeight();
+        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), lowPassHeight * 1.5);
+
+        highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
+        float highPassHeight = highPassSlider.getSliderBounds().getHeight();
+        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), lowPassHeight * 1.5);
+    }
+    else
+    {
+        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.3f)));
+        delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.43f)));
+        float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.4f);
+        float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.6f);
+        float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);
+        float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);
+
+        lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
+        float lowPassHeight = lowPassSlider.getSliderBounds().getHeight();
+        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), lowPassHeight * 1.17);
+
+        highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
+        float highPassHeight = highPassSlider.getSliderBounds().getHeight();
+        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), lowPassHeight * 1.17);
+    }
+
+    float bpmY = windowHeight * JUCE_LIVE_CONSTANT(1.3f);
+    bpmLabel.setBounds((windowWidth * 0.5f) - 25, bpmY * 0.15, 100, 30);
+
     float chorusButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.42f);
     float reverbButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.58f);
-    
-    float bpmY = windowHeight * JUCE_LIVE_CONSTANT(0.25f);
-    float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);   
-    float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f); 
     float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
     float reverbButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
 
-    lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
-    highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
     chorusSlider.setBounds(chorusButtonX - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
+    float chorusSliderHeight = chorusSlider.getSliderBounds().getHeight();
+    chorusSlider.setBounds(chorusSlider.getBounds().getX(), chorusSlider.getBounds().getY(), chorusSlider.getBounds().getWidth(), chorusSliderHeight * 1.17);
+
     reverbSlider.setBounds(reverbButtonX - toggleButtonWidth * 0.5f, reverbButtonY, toggleButtonWidth, toggleButtonHeight);
-    bpmLabel.setBounds((windowWidth * 0.5f) - 25, bpmY * 0.15, 100, 30);
+    float reverbSliderHeight = reverbSlider.getSliderBounds().getHeight();
+    reverbSlider.setBounds(reverbSlider.getBounds().getX(), reverbSlider.getBounds().getY(), reverbSlider.getBounds().getWidth(), reverbSliderHeight * 1.17);
 
     int width = getWidth();
     int height = getHeight();

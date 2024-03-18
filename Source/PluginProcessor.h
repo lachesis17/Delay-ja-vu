@@ -116,9 +116,14 @@ private:
 	float reverbLevel;
 
 	float chorusRate = 0.45f; 
-	float chorusDepth = 0.75f;
+	float chorusDepth = 0.33f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
+
+	float reverbModRate = 0.025f;
+	float reverbModDepth = 0.025f;
+	float reverbModPhase = 0.f;
+	float reverbModulation = 0.f;
 
 	std::array<std::unique_ptr<DelayLine>, 10> reverbDelaysLeft;
 	std::array<std::unique_ptr<DelayLine>, 10> reverbDelaysRight;
