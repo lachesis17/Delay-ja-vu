@@ -7,7 +7,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     using namespace juce;
 
     auto yOffset = JUCE_LIVE_CONSTANT(10);
-    auto bounds = Rectangle<float>(x, y + yOffset, width, height);
+    auto bounds = Rectangle<float>(static_cast<float>(x), static_cast<float>(y) + static_cast<float>(yOffset), static_cast<float>(width), static_cast<float>(height));
 
     auto enabled = dynamic_cast<RotarySliderToggle*>(&slider) ? dynamic_cast<RotarySliderToggle*>(&slider)->getSliderState() : true;
 
@@ -23,16 +23,16 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     }
 
     g.setGradientFill(currentGradient);
-    g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)));
+    g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15.f)));
 
     auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
     auto valueLineWidth = jmin(4.0f, width * 0.05f);
-    auto valueArcOuterRadius = (width * 0.55f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9); // value arc outside slider bounds, bigger than half the width
+    auto valueArcOuterRadius = (width * 0.55f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9f); // value arc outside slider bounds, bigger than half the width
 
     Path backgroundArc;
     backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getCentreY(), valueArcOuterRadius, valueArcOuterRadius,
                                 0.0f, rotaryStartAngle, rotaryEndAngle, true);
-    g.setColour(enabled ? Colour(63u, 72u, 204u).withMultipliedAlpha(JUCE_LIVE_CONSTANT(0.35)) : Colours::black);
+    g.setColour(enabled ? Colour(63u, 72u, 204u).withMultipliedAlpha(JUCE_LIVE_CONSTANT(0.35f)) : Colours::black);
     g.strokePath(backgroundArc, PathStrokeType(valueLineWidth, PathStrokeType::curved));
 
     Path valueArc;
@@ -43,7 +43,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
 
     
     g.setColour(enabled ? Colour(250u, 250u, 250u) : Colour(Colours::black));
-    g.drawEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15)), 2.5f); // white border for all the sliders
+    g.drawEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15.f)), 2.5f); // white border for all the sliders
 
     if(auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
@@ -53,8 +53,8 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         Rectangle<float> r;
         r.setLeft(center.getX() - 3.5f);
         r.setRight(center.getX() + 3.5f);
-        r.setTop((bounds.getY() + yOffset) * JUCE_LIVE_CONSTANT(1.2)); // adjust to set the value line to fit inside reduced bounds
-        r.setBottom(center.getY() - rswl->getTextHeight() * 1.5);
+        r.setTop((bounds.getY() + yOffset) * JUCE_LIVE_CONSTANT(1.2f)); // adjust to set the value line to fit inside reduced bounds
+        r.setBottom(center.getY() - rswl->getTextHeight() * 1.5f);
 
         p.addRoundedRectangle(r, 2.f);
         jassert(rotaryStartAngle < rotaryEndAngle);
@@ -69,7 +69,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         auto text = rswl->getDisplayString();
         auto strWidth = g.getCurrentFont().getStringWidth(text);
         
-        r.setSize(strWidth + 22, rswl->getTextHeight() + 10);
+        r.setSize(strWidth + 22.f, (rswl->getTextHeight() + 10.f));
         r.setCentre(center);
 
         g.setColour(enabled ? Colours::black : Colours::white);
@@ -78,9 +78,9 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         //g.fillRect(r);
 
         g.setColour(enabled ? Colours::white : Colours::black);
-        const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
+        const juce::Typeface::Ptr font = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
         float labelFontSize = slider.getProperties()["labelFontSize"]; // use the private member vars of each slider class
-        g.setFont(juce::Font(typeface).withHeight(labelFontSize)); // slider labels
+        g.setFont(juce::Font(font).withHeight(labelFontSize)); // slider labels
         g.drawFittedText(text, r.toNearestInt(), Justification::centred, 1);
     }
 }
@@ -103,8 +103,8 @@ juce::ColourGradient RotaryLookAndFeel::getSliderGradient(int width, int height,
 
 void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
                         juce::ToggleButton &toggleButton, 
-                        bool shouldDrawButtonAsHighlighted, 
-                        bool shouldDrawButtonAsDown)
+                        [[maybe_unused]] bool shouldDrawButtonAsHighlighted, 
+                        [[maybe_unused]] bool shouldDrawButtonAsDown)
 {
     using namespace juce;
     Path powerButton, shadowPath;
@@ -115,12 +115,12 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
     
     bool scale = bounds.getWidth() > bounds.getHeight();
     auto size = scale ?  bounds.getHeight() * 0.2f : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.2f); // toggle button size
-    auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+    auto r = bounds.withSizeKeepingCentre(static_cast<int>(size), static_cast<int>(size)).toFloat();
 
     float ang = 25.f;
     size -= 7;;
 
-    powerButton.addCentredArc(r.getCentreX(), r.getCentreY(), size * 0.5, size * 0.5, 0.f, degreesToRadians(ang), degreesToRadians(360.f - ang), true);
+    powerButton.addCentredArc(r.getCentreX(), r.getCentreY(), size * 0.5f, size * 0.5f, 0.f, degreesToRadians(ang), degreesToRadians(360.f - ang), true);
     powerButton.startNewSubPath(r.getCentreX(), r.getY());
     powerButton.lineTo(r.getCentre());
 
@@ -160,7 +160,7 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     // g.drawRect(sliderBounds);
 
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), 
-    jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAng, endAng, *this);
+    static_cast<float>(jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0)), startAng, endAng, *this);
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
@@ -169,11 +169,11 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
 
     auto size = juce::jmin(bounds.getWidth(), bounds.getHeight());
 
-    size -= getTextHeight() * 2;
+    size -= static_cast<int>(getTextHeight() * 2);
 
     juce::Rectangle<int> r;
     r.setSize(size, size);
-    r.setCentre(bounds.getCentreX(), 0);
+    r.setCentre(static_cast<int>(bounds.getCentreX()), 0);
     r.setY(2);
 
     return r;
@@ -187,14 +187,14 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
     juce::String str;
 
-    if(auto* floatParam = dynamic_cast<juce::AudioParameterInt*>(param))
+    if(auto* intParam = dynamic_cast<juce::AudioParameterInt*>(param))
     {
-        float val = getValue();
+        auto val = getValue();
         str = juce::String(val, 0);
     }
     else if (auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param))
     {
-        float val = getValue();
+        float val = static_cast<float>(getValue());
         str = juce::String(val, 0);
     }
     else
@@ -259,10 +259,15 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
 
     setSize(width, height);
     setResizable(true,true);
-    juce::Rectangle<int> r = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
-    int x = r.getWidth();
-    int y = r.getHeight();
-    setResizeLimits(800, 550, x, y);
+    auto& displays = juce::Desktop::getInstance().getDisplays();
+    auto displayOpt = displays.getPrimaryDisplay();
+
+    if (displayOpt) { // Ensure we have a display
+        auto& r = *displayOpt;
+        int x = r.totalArea.getWidth(); // Use totalArea or userArea depending on your needs
+        int y = r.totalArea.getHeight();
+        setResizeLimits(800, 550, x, y);
+    }
 
     startTimer(500); // to update bpm
 }
@@ -295,23 +300,23 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 
     float windowHeight = static_cast<float>(getHeight());
 
-    delayTimeSliderLeftBounds.setY(delayTimeSliderLeftBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
-    delayTimeSliderRightBounds.setY(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f));
-    delayTimeSliderLeftBounds.setX(delayTimeSliderLeftBounds.getX());
-    delayTimeSliderRightBounds.setX(delayTimeSliderRightBounds.getX());
-    feedbackSliderBounds.setY(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
-    dryWetBounds.setY(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f));
-    feedbackSliderBounds.setX(feedbackSlider.getX());
-    dryWetBounds.setX(dryWetSlider.getX());
+    delayTimeSliderLeftBounds.setY(static_cast<int>(delayTimeSliderLeftBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f)));
+    delayTimeSliderRightBounds.setY(static_cast<int>(delayTimeSliderRightBounds.getY() + windowHeight * JUCE_LIVE_CONSTANT(-0.275f)));
+    delayTimeSliderLeftBounds.setX(static_cast<int>(delayTimeSliderLeftBounds.getX()));
+    delayTimeSliderRightBounds.setX(static_cast<int>(delayTimeSliderRightBounds.getX()));
+    feedbackSliderBounds.setY(static_cast<int>(feedbackSliderBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f)));
+    dryWetBounds.setY(static_cast<int>(dryWetBounds.getBottom() + windowHeight * JUCE_LIVE_CONSTANT(-0.145f)));
+    feedbackSliderBounds.setX(static_cast<int>(feedbackSlider.getX()));
+    dryWetBounds.setX(static_cast<int>(dryWetSlider.getX()));
 
-    chorusLabelBounds.setX(chorusSlider.getBounds().getCentreX() - (chorusLabelBounds.getWidth() / 2));
-    chorusLabelBounds.setY(chorusSlider.getBounds().getY() + (chorusLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
-    lowPassLabelBounds.setX(lowPassSlider.getBounds().getCentreX() - (lowPassLabelBounds.getWidth() / 2));
-    lowPassLabelBounds.setY(lowPassSlider.getBounds().getY() + (lowPassLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
-    highPassLabelBounds.setX(highPassSlider.getBounds().getCentreX() - (highPassLabelBounds.getWidth() / 2));
-    highPassLabelBounds.setY(highPassSlider.getBounds().getY() + (highPassLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
-    reverbLabelBounds.setX(reverbSlider.getBounds().getCentreX() - (reverbLabelBounds.getWidth() / 2));
-    reverbLabelBounds.setY(reverbSlider.getBounds().getY() + (reverbLabelBounds.getHeight() / 2) + JUCE_LIVE_CONSTANT(20.0f));
+    chorusLabelBounds.setX(static_cast<int>(chorusSlider.getBounds().getCentreX() - (chorusLabelBounds.getWidth() / 2.f)));
+    chorusLabelBounds.setY(static_cast<int>(chorusSlider.getBounds().getY() + (chorusLabelBounds.getHeight() / 2.f) + JUCE_LIVE_CONSTANT(20.f)));
+    lowPassLabelBounds.setX(static_cast<int>(lowPassSlider.getBounds().getCentreX() - (lowPassLabelBounds.getWidth() / 2.f)));
+    lowPassLabelBounds.setY(static_cast<int>(lowPassSlider.getBounds().getY() + (lowPassLabelBounds.getHeight() / 2.f) + JUCE_LIVE_CONSTANT(20.f)));
+    highPassLabelBounds.setX(static_cast<int>(highPassSlider.getBounds().getCentreX() - (highPassLabelBounds.getWidth() / 2.f)));
+    highPassLabelBounds.setY(static_cast<int>(highPassSlider.getBounds().getY() + (highPassLabelBounds.getHeight() / 2.f) + JUCE_LIVE_CONSTANT(20.f)));
+    reverbLabelBounds.setX(static_cast<int>(reverbSlider.getBounds().getCentreX() - (reverbLabelBounds.getWidth() / 2.f)));
+    reverbLabelBounds.setY(static_cast<int>(reverbSlider.getBounds().getY() + (reverbLabelBounds.getHeight() / 2.f) + JUCE_LIVE_CONSTANT(20.f)));
 
     g.drawFittedText("Delay Time Left", delayTimeSliderLeftBounds, juce::Justification::centred, 1);
     g.drawFittedText("Delay Time Right", delayTimeSliderRightBounds, juce::Justification::centred, 1);
@@ -326,11 +331,11 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
 void DelayAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(JUCE_LIVE_CONSTANT(50));
-    auto delayArea = bounds.removeFromRight(bounds.getWidth() * JUCE_LIVE_CONSTANT(1.f));
-    delayArea.removeFromTop(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f));
-    auto feedbackArea = delayArea.removeFromBottom(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f));
-    feedbackSlider.setBounds(feedbackArea.removeFromLeft(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)));
-    dryWetSlider.setBounds(feedbackArea.removeFromRight(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)));
+    auto delayArea = bounds.removeFromRight(bounds.getWidth());
+    delayArea.removeFromTop(static_cast<int>(std::round(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f))));
+    auto feedbackArea = delayArea.removeFromBottom(static_cast<int>(std::round(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.4f))));
+    feedbackSlider.setBounds(feedbackArea.removeFromLeft(static_cast<int>(std::round(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.4f)))));
+    dryWetSlider.setBounds(feedbackArea.removeFromRight(static_cast<int>(std::round(feedbackArea.getWidth() * JUCE_LIVE_CONSTANT(0.7f)))));
 
     float windowHeight = static_cast<float>(getHeight());
     float windowWidth = static_cast<float>(getWidth());
@@ -339,54 +344,52 @@ void DelayAudioProcessorEditor::resized()
 
     if (windowHeight >= windowWidth) //== shitty responsiveness attempt
     {
-        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.38f)));
-        delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.61f)));
+        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(static_cast<int>(std::round(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.38f)))));
+        delayTimeSliderRight.setBounds(delayArea.removeFromRight(static_cast<int>(std::round(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.61f)))));
         float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.42f);
         float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.58f);
         float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.375f);
         float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.375f);
 
-        lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
-        float lowPassHeight = lowPassSlider.getSliderBounds().getHeight();
-        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), lowPassHeight * 1.5);
+        lowPassSlider.setBounds(static_cast<int>(lowPassButtonX - toggleButtonWidth * 0.5f),static_cast<int>(lowPassButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+        float lowPassHeight = static_cast<float>(lowPassSlider.getSliderBounds().getHeight());
+        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), static_cast<int>(lowPassHeight * 1.5));
 
-        highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
-        float highPassHeight = highPassSlider.getSliderBounds().getHeight();
-        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), lowPassHeight * 1.5);
+        highPassSlider.setBounds(static_cast<int>(highPassButtonX - toggleButtonWidth * 0.5f), static_cast<int>(highPassButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), static_cast<int>(lowPassHeight * 1.5));
     }
     else
     {
-        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.3f)));
-        delayTimeSliderRight.setBounds(delayArea.removeFromRight(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.43f)));
+        delayTimeSliderLeft.setBounds(delayArea.removeFromLeft(static_cast<int>(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.3f))));
+        delayTimeSliderRight.setBounds(delayArea.removeFromRight(static_cast<int>(delayArea.getWidth() * JUCE_LIVE_CONSTANT(0.43f))));
         float lowPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.4f);
         float highPassButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.6f);
         float lowPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);
         float highPassButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.3f);
 
-        lowPassSlider.setBounds(lowPassButtonX - toggleButtonWidth * 0.5f, lowPassButtonY, toggleButtonWidth, toggleButtonHeight);
-        float lowPassHeight = lowPassSlider.getSliderBounds().getHeight();
-        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), lowPassHeight * 1.17);
+        lowPassSlider.setBounds(static_cast<int>(lowPassButtonX - toggleButtonWidth * 0.5f), static_cast<int>(lowPassButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+        float lowPassHeight = static_cast<float>(lowPassSlider.getSliderBounds().getHeight());
+        lowPassSlider.setBounds(lowPassSlider.getBounds().getX(), lowPassSlider.getBounds().getY(), lowPassSlider.getBounds().getWidth(), static_cast<int>(lowPassHeight * 1.17));
 
-        highPassSlider.setBounds(highPassButtonX - toggleButtonWidth * 0.5f, highPassButtonY, toggleButtonWidth, toggleButtonHeight);
-        float highPassHeight = highPassSlider.getSliderBounds().getHeight();
-        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), lowPassHeight * 1.17);
+        highPassSlider.setBounds(static_cast<int>(highPassButtonX - toggleButtonWidth * 0.5f), static_cast<int>(highPassButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+        highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), static_cast<int>(lowPassHeight * 1.17));
     }
 
     float bpmY = windowHeight * JUCE_LIVE_CONSTANT(1.3f);
-    bpmLabel.setBounds((windowWidth * 0.5f) - 25, bpmY * 0.15, 100, 30);
+    bpmLabel.setBounds(static_cast<int>((windowWidth * 0.5f) - 25.f), static_cast<int>(bpmY * 0.15f), 100, 30);
 
     float chorusButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.42f);
     float reverbButtonX = windowWidth * JUCE_LIVE_CONSTANT(0.58f);
     float chorusButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
     float reverbButtonY = windowHeight * JUCE_LIVE_CONSTANT(0.555f);
 
-    chorusSlider.setBounds(chorusButtonX - toggleButtonWidth * 0.5f, chorusButtonY, toggleButtonWidth, toggleButtonHeight);
-    float chorusSliderHeight = chorusSlider.getSliderBounds().getHeight();
-    chorusSlider.setBounds(chorusSlider.getBounds().getX(), chorusSlider.getBounds().getY(), chorusSlider.getBounds().getWidth(), chorusSliderHeight * 1.17);
+    chorusSlider.setBounds(static_cast<int>(chorusButtonX - toggleButtonWidth * 0.5f), static_cast<int>(chorusButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+    float chorusSliderHeight = static_cast<float>(chorusSlider.getSliderBounds().getHeight());
+    chorusSlider.setBounds(chorusSlider.getBounds().getX(), chorusSlider.getBounds().getY(), chorusSlider.getBounds().getWidth(), static_cast<int>(chorusSliderHeight * 1.17));
 
-    reverbSlider.setBounds(reverbButtonX - toggleButtonWidth * 0.5f, reverbButtonY, toggleButtonWidth, toggleButtonHeight);
-    float reverbSliderHeight = reverbSlider.getSliderBounds().getHeight();
-    reverbSlider.setBounds(reverbSlider.getBounds().getX(), reverbSlider.getBounds().getY(), reverbSlider.getBounds().getWidth(), reverbSliderHeight * 1.17);
+    reverbSlider.setBounds(static_cast<int>(reverbButtonX - toggleButtonWidth * 0.5f), static_cast<int>(reverbButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
+    float reverbSliderHeight = static_cast<float>(reverbSlider.getSliderBounds().getHeight());
+    reverbSlider.setBounds(reverbSlider.getBounds().getX(), reverbSlider.getBounds().getY(), reverbSlider.getBounds().getWidth(), static_cast<int>(reverbSliderHeight * 1.17));
 
     int width = getWidth();
     int height = getHeight();

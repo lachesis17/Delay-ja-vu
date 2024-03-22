@@ -120,15 +120,17 @@ private:
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
 
-	float reverbModRate = 0.025f;
-	float reverbModDepth = 0.025f;
+	float reverbModRate = 0.005f;
+	float reverbModDepth = 0.005f;
 	float reverbModPhase = 0.f;
 	float reverbModulation = 0.f;
 
 	std::array<std::unique_ptr<DelayLine>, 10> reverbDelaysLeft;
 	std::array<std::unique_ptr<DelayLine>, 10> reverbDelaysRight;
-	const std::array<float, 10> fixedDelayTimesLeft = {33.0f, 42.0f, 55.0f, 77.0f, 86.0f, 121.0f, 133.0f, 143.0f, 152.0f, 168.0f};
-	const std::array<float, 10> fixedDelayTimesRight = {43.0f, 64.0f, 72.0f, 89.0f, 101.0f, 117.0f, 125.0f, 130.0f, 142.0f, 158.0f};
+	//const std::array<float, 10> fixedDelayTimesLeft = {33.0f, 42.0f, 55.0f, 77.0f, 86.0f, 121.0f, 133.0f, 143.0f, 152.0f, 168.0f};
+	//const std::array<float, 10> fixedDelayTimesRight = {43.0f, 64.0f, 72.0f, 89.0f, 101.0f, 117.0f, 125.0f, 130.0f, 142.0f, 158.0f};
+	const std::array<float, 10> fixedDelayTimesLeft = {182.20f, 164.17f, 149.06f, 136.87f, 127.59f, 121.24f, 117.80f, 117.29f, 119.69f, 125.02f};
+	const std::array<float, 10> fixedDelayTimesRight = {184.03f, 165.81f, 150.55f, 138.24f, 128.87f, 122.45f, 118.98f, 118.46f, 120.89f, 126.27f};
 	std::array<juce::dsp::IIR::Filter<float>, 10> reverbLowPassLeft;
 	std::array<juce::dsp::IIR::Filter<float>, 10> reverbLowPassRight;
 	std::array<juce::dsp::IIR::Filter<float>, 10> reverbAllPassLeft1;

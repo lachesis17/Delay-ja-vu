@@ -44,7 +44,7 @@ public:
 		if (!interpolate) return y1;
 		T y2 = readBuffer((int)delayInFractionalSamples + 1);
 		double fraction = delayInFractionalSamples - (int)delayInFractionalSamples;
-		return doLinearInterpolation(y1, y2, fraction);
+		return static_cast<T>(doLinearInterpolation(y1, y2, fraction));
 	}
 
 	inline double doLinearInterpolation(double y1, double y2, double fractional_X)
@@ -72,7 +72,7 @@ class DelayLine
 public:
 	explicit DelayLine(double sampleRate)
 	: currentSampleRate(sampleRate), 
-	coeff(1.0f - std::exp(-1.0f / (0.1f * sampleRate))) {}
+	coeff(1.0f - static_cast<float>(std::exp(-1.0f / (0.1f * sampleRate)))) {}
 
 	//==============================================================================
 
@@ -89,7 +89,7 @@ public:
 	void setSampleRate(double newSampleRate)
 	{
 		currentSampleRate = newSampleRate;
-		coeff = 1.0f - std::exp(-1.0f / (0.1f * newSampleRate));
+		coeff = 1.0f - static_cast<float>(std::exp(-1.0f / (0.1f * newSampleRate)));
 	}
 
 	//==============================================================================
@@ -109,10 +109,10 @@ public:
 		return smoothedDelayTime.getNextValue();
 	}
 
-	float setNewTargetWithSmooth(float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
+	float setNewTargetWithSmooth(float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& delayTimeSmooth, float newDelayTime)
 	{
-		smoothedDelayTime.setTargetValue(newDelayTime);
-		delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff);
+		delayTimeSmooth.setTargetValue(newDelayTime);
+		delayedSample = applyOnePoleFilter(delayedSample, delayTimeSmooth.getNextValue(), coeff);
 		return delayedSample;
 	}
 
@@ -128,25 +128,25 @@ public:
 		return next + ((next - current) * coefficient);
 	}
 
-	float applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDelayTime, float newDelayTime)
+	float applyChorus(int sample, float currentMixValue, float delayedSample, SmoothedValue<float, ValueSmoothingTypes::Linear>& delayTimeSmooth, float newDelayTime)
 	{
-		chorusModulation = chorusDepth * std::sin(2.0 * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase);
-		chorusPhase += 2.0 * juce::MathConstants<float>::pi * chorusRate / currentSampleRate;
-		if (chorusPhase > 2.0 * juce::MathConstants<float>::pi)
+		chorusModulation = chorusDepth * std::sin(2.0f * static_cast<float>(juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase));
+		chorusPhase += 2.0f * static_cast<float>(juce::MathConstants<float>::pi * chorusRate / currentSampleRate);
+		if (chorusPhase > 2.0f * static_cast<float>(juce::MathConstants<float>::pi))
 		{
-			chorusPhase -= 2.0 * juce::MathConstants<float>::pi;
+			chorusPhase -= static_cast<float>(2.0 * juce::MathConstants<float>::pi);
 		}
 
-		if (newDelayTime != smoothedDelayTime.getCurrentValue() && newDelayTime != 0.f) 
+		if (newDelayTime != delayTimeSmooth.getCurrentValue() && newDelayTime != 0.f) 
 		{
-			smoothedDelayTime.setTargetValue(newDelayTime + chorusModulation);
+			delayTimeSmooth.setTargetValue(newDelayTime + chorusModulation);
 		} 
 		else
 		{
-			smoothedDelayTime.setTargetValue(newDelayTime);
+			delayTimeSmooth.setTargetValue(newDelayTime);
 		}
 
-		delayedSample = applyOnePoleFilter(delayedSample, smoothedDelayTime.getNextValue(), coeff);
+		delayedSample = applyOnePoleFilter(delayedSample, delayTimeSmooth.getNextValue(), coeff);
 
 		if (newDelayTime != 0.f && currentMixValue != 0.f)
 		{
@@ -160,7 +160,7 @@ public:
 
 	void makeBuffer()
 	{
-		circBuff.createCircularBuffer(2 * currentSampleRate);		// double samplerate or limited to 1365ms @ 48k
+		circBuff.createCircularBuffer(static_cast<unsigned int>(2 * currentSampleRate));		// double samplerate or limited to 1365ms @ 48k
 		circBuff.flushBuffer();
 	}
 

@@ -83,7 +83,7 @@ void animateColor()
 
   void paint(juce::Graphics& g) override;
   juce::Rectangle<int> getSliderBounds() const;
-  int getTextHeight() const { return 15.5f; }
+  float getTextHeight() const { return 15.5f; }
   juce::String getDisplayString() const;
 private:
   RotaryLookAndFeel lnf; // Calling this "LookAndFeel" throws ambiguous symbol error as could be juce::LookAndFeel
