@@ -58,6 +58,8 @@ target_sources(Delay-ja-vu
         Source/PluginEditor.h
         Source/PluginProcessor.h
         Source/DelayLine.h
+        Source/ReverbLines.h
+        Source/Filters.h
         Resources/resources.rc
         )
 
