@@ -183,6 +183,8 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     float newReverbLevel = chainsettings.reverbLevel;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
+    float newInputSignalLevel = 0.f;
+    float newOutputSignalLevel = 0.f;
 
     //== TOGGLE MIXES
     toggleButtonStateMixes(lowPass, highPass, chorus, reverb);
@@ -220,6 +222,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
+            newInputSignalLevel = fmaxf(newInputSignalLevel, fabsf(inData[sample]));
+            inputSignalLevel = newInputSignalLevel * 1.25f;
+            inputSignalLevel = fminf(inputSignalLevel, 1.0f);       // keep it below 1
 
             if (channel == 0) //== LEFT CHANNEL
             {
@@ -291,6 +296,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
                 currentReverbMix = smoothedReverb.getNextValue();       
                 outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
+            newOutputSignalLevel = fmaxf(newOutputSignalLevel, fabsf(outData[sample]));
+            outputSignalLevel = newOutputSignalLevel * 1.25f;
+            outputSignalLevel = fminf(outputSignalLevel, 1.0f);       // keep it below 1
         }
     }
 }
@@ -323,7 +331,7 @@ void DelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes
     }
 }
 
-float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime)
+[[nodiscard]] float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime)
 {
     chorusModulation = chorusDepth * static_cast<float>(std::sin(2.0f * juce::MathConstants<float>::pi * chorusRate * sample / currentSampleRate + chorusPhase));
     chorusPhase += 2.0f * static_cast<float>(juce::MathConstants<float>::pi * chorusRate / currentSampleRate);
@@ -353,7 +361,7 @@ float DelayAudioProcessor::applyChorus(int sample, float currentMixValue, DelayL
     return delayedSample;
 }
 
-float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float coefficient)
+[[nodiscard]] float DelayAudioProcessor::applyOnePoleFilter(float current, float next, float coefficient)
 {
     return next + ((next - current) * coefficient);
 }
@@ -370,13 +378,13 @@ void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bo
     smoothedReverb.setTargetValue(targetReverbMix);
 }
 
-float DelayAudioProcessor::setDryWetMix(float newDelayTime, float drywet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedwrywet)
+[[nodiscard]] float DelayAudioProcessor::setDryWetMix(float newDelayTime, float drywet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedwrywet)
 {
     smoothedwrywet.setTargetValue(newDelayTime == 0.f ? 0.f : newDryWet);
     return applyOnePoleFilter(drywet, smoothedwrywet.getNextValue(), newDelayTime == 0.f ? coeff_lrg : coeff_sml);
 }
 
-float DelayAudioProcessor::getCurrentBPM()
+[[nodiscard]] float DelayAudioProcessor::getCurrentBPM()
 {
     AudioPlayHead* playhead = getPlayHead();
     AudioPlayHead::CurrentPositionInfo positionInfo;

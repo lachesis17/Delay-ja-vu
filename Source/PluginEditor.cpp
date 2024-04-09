@@ -69,7 +69,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         auto text = rswl->getDisplayString();
         auto strWidth = g.getCurrentFont().getStringWidth(text);
         
-        r.setSize(strWidth + 22.f, (rswl->getTextHeight() + 10.f));
+        r.setSize(strWidth + 18.f, (rswl->getTextHeight() + 7.5f));
         r.setCentre(center);
 
         g.setColour(enabled ? Colours::black : Colours::white);
@@ -269,7 +269,7 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
         setResizeLimits(800, 550, x, y);
     }
 
-    startTimer(500); // to update bpm
+    startTimer(60); // to update bpm
 }
 
 DelayAudioProcessorEditor::~DelayAudioProcessorEditor()
@@ -325,7 +325,69 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText("Chorus", chorusLabelBounds, juce::Justification::centred, 1);
     g.drawFittedText("Low Pass", lowPassLabelBounds, juce::Justification::centred, 1);
     g.drawFittedText("High Pass", highPassLabelBounds, juce::Justification::centred, 1);
-    g.drawFittedText("Reverb", reverbLabelBounds, juce::Justification::centred, JUCE_LIVE_CONSTANT(1));
+    g.drawFittedText("Reverb", reverbLabelBounds, juce::Justification::centred, 1);
+
+    // input and output level visualisers
+    float visualiserLevels[2] =
+    {
+        audioProcessor.getInputSignalLevel(),
+        audioProcessor.getOutputSignalLevel()
+    };
+    
+    for (auto& level : visualiserLevels)
+    {
+        level = juce::jlimit(0.0f, 1.0f, level);
+    }
+
+    int visualiserPosX[2] =
+    {
+        static_cast<int>(getWidth() - (getWidth() * JUCE_LIVE_CONSTANT(0.98f))),
+        static_cast<int>(getWidth() * JUCE_LIVE_CONSTANT(0.9633f))
+    };
+
+    int visualiserPosY = 100;
+    int visualiserWidth = 20;
+    int visualiserHeight = getHeight() - 200;
+    int segmentGap = 5;
+    const int numSegments = 40;
+    float segmentHeight = (visualiserHeight - (numSegments - 1) * segmentGap) / (float)numSegments;
+
+    for (int j = 0; j < 2; ++j)
+    {
+        // g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));        // meter background
+        // g.fillRect(visualiserPosX[j], visualiserPosY, visualiserWidth, visualiserHeight);
+
+        int bottom = visualiserPosY + visualiserHeight;
+        juce::Rectangle<int> labelBounds((visualiserPosX[j] + visualiserWidth / 2) - 30 / 2, bottom + 10, 30, 20);
+
+        for (int i = 0; i < numSegments; ++i)
+        {
+            int segmentTop = visualiserPosY + static_cast<int>((segmentHeight + segmentGap) * i);
+            int segmentBottom = visualiserPosY + visualiserHeight - (segmentTop - visualiserPosY) - static_cast<int>(segmentHeight);
+
+            if (visualiserLevels[j] * numSegments > i || (i == 0 && visualiserLevels[j] > 1.0f / numSegments))
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.8f));      // active
+                g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners
+            }
+            else 
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.2f));      // inactive
+                g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners
+            }
+        }
+        g.setColour(juce::Colours::white);
+        g.drawFittedText(j == 0 ? "In" : "Out", labelBounds, juce::Justification::centred, 1);
+        // // drop shadow
+        // int activeHeight = static_cast<int>(visualiserLevels[j] * numSegments * (segmentHeight + segmentGap));
+        // if (activeHeight > 0) activeHeight -= static_cast<int>(segmentGap);
+        // int activeY = visualiserPosY + visualiserHeight - activeHeight;
+        // if (activeHeight > 0)
+        // {
+        //     juce::DropShadow shadow(juce::Colour(43u, 52u, 177u).withAlpha(0.5f), 25, juce::Point<int>(0, -5));
+        //     shadow.drawForRectangle(g, juce::Rectangle<int>(visualiserPosX[j], activeY, visualiserWidth, activeHeight));
+        // }
+    }
 }
 
 void DelayAudioProcessorEditor::resized()

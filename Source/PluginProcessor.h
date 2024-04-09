@@ -74,13 +74,15 @@ public:
 
 	ApplicationProperties& getAppProperties() { return appProperties; }
 	float getCurrentBPM();
+	float getInputSignalLevel() const { return inputSignalLevel; }
+	float getOutputSignalLevel() const { return outputSignalLevel; }
 
 private:
 	ApplicationProperties appProperties;
 
-	float applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime);
-	float applyOnePoleFilter(float current, float next, float coefficient);
-	float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
+	[[nodiscard]] float applyChorus(int sample, float currentMixValue, DelayLine& delayLine, float newDelayTime);
+	[[nodiscard]] float applyOnePoleFilter(float current, float next, float coefficient);
+	[[nodiscard]] float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb);
 
 	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPassMix, smoothedHighPassMix, smoothedChorus, smoothedReverb, smoothedReverbLevel;
@@ -107,6 +109,9 @@ private:
 	float chorusDepth = 0.33f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
+
+	float inputSignalLevel;
+	float outputSignalLevel;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)

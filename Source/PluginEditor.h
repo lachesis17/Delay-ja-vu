@@ -83,11 +83,11 @@ void animateColor()
 
   void paint(juce::Graphics& g) override;
   juce::Rectangle<int> getSliderBounds() const;
-  float getTextHeight() const { return 15.5f; }
+  float getTextHeight() const { return labelFontSize; }
   juce::String getDisplayString() const;
 private:
   RotaryLookAndFeel lnf; // Calling this "LookAndFeel" throws ambiguous symbol error as could be juce::LookAndFeel
-  float labelFontSize = 15.5f;
+  float labelFontSize = 17.f;
   bool sliderEnabled = true;
 
   void setComponentProperty(const juce::Identifier& propertyName, float value)
@@ -112,7 +112,7 @@ struct RotarySliderToggle : RotarySliderWithLabels {
 private:
     juce::AudioProcessorValueTreeState& apvts;
     juce::String paramId;
-    float labelFontSize = 12.5f;
+    float labelFontSize = 14.f;
 
 void setComponentProperty(const juce::Identifier& propertyName, float value)
   {
@@ -179,7 +179,11 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-  void DelayAudioProcessorEditor::timerCallback() { updateBPMLabel(); }
+  void DelayAudioProcessorEditor::timerCallback()
+  {
+    updateBPMLabel();
+    repaint();
+  }
   void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabels &slider);
 
 private:
