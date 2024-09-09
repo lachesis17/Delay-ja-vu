@@ -80,7 +80,8 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         g.setColour(enabled ? Colours::white : Colours::black);
         const juce::Typeface::Ptr font = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
         float labelFontSize = slider.getProperties()["labelFontSize"]; // use the private member vars of each slider class
-        g.setFont(juce::Font(font).withHeight(labelFontSize)); // slider labels
+        juce::FontOptions fontOptions = juce::FontOptions(font).withHeight(labelFontSize).withStyle("plain");
+        g.setFont(juce::Font(fontOptions)); // slider labels
         g.drawFittedText(text, r.toNearestInt(), Justification::centred, 1);
     }
 }
@@ -284,7 +285,8 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll();
     
     g.setColour(juce::Colours::white);
-    g.setFont(juce::Font(typeface).withHeight(15.5f)); // slider labels
+    juce::FontOptions fontOptions = juce::FontOptions(typeface).withHeight(15.5f).withStyle("plain");
+    g.setFont(juce::Font(fontOptions)); // slider labels
 
     juce::Rectangle<int> delayTimeSliderLeftBounds = delayTimeSliderLeft.getBounds();
     juce::Rectangle<int> delayTimeSliderRightBounds = delayTimeSliderRight.getBounds();

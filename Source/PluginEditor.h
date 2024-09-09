@@ -163,7 +163,8 @@ struct BPMLabel : juce::Label
   BPMLabel()
   {
     auto typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
-    setFont(juce::Font(typeface).withHeight(11.5f));
+    juce::FontOptions fontOptions = juce::FontOptions(typeface).withHeight(11.5f).withStyle("plain");
+    setFont(juce::Font(fontOptions));
     setColour(juce::Label::textColourId, juce::Colours::white);
   }   
 };
