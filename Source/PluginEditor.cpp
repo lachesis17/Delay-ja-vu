@@ -9,13 +9,15 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     auto yOffset = JUCE_LIVE_CONSTANT(10);
     auto bounds = Rectangle<float>(static_cast<float>(x), static_cast<float>(y) + static_cast<float>(yOffset), static_cast<float>(width), static_cast<float>(height));
 
+    // gradient colors
     auto enabled = dynamic_cast<RotarySliderToggle*>(&slider) ? dynamic_cast<RotarySliderToggle*>(&slider)->getSliderState() : true;
-
-    auto enabledGradient = getSliderGradient(width, height, true);
-    auto disabledGradient = getSliderGradient(width, height, false);
     float alpha = dynamic_cast<RotarySliderToggle*>(&slider) ? dynamic_cast<RotarySliderToggle*>(&slider)->getAlpha() : 1.0f;
 
-    ColourGradient currentGradient;
+    ColourGradient enabledGradient = getSliderGradient(width, height, true);
+    ColourGradient disabledGradient = getSliderGradient(width, height, false);
+    ColourGradient currentGradient = enabled ? enabledGradient : disabledGradient;
+
+    currentGradient.clearColours();
     for (int i = 0; i < enabledGradient.getNumColours(); ++i)
     {
         Colour col = enabledGradient.getColour(i).interpolatedWith(disabledGradient.getColour(i), 1.0f - alpha);
@@ -25,6 +27,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     g.setGradientFill(currentGradient);
     g.fillEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15.f)));
 
+    // value arcs
     auto endValueAngle = rotaryStartAngle + currentValue * (rotaryEndAngle - rotaryStartAngle); // set the max angle of the value arc to the current value
     auto valueLineWidth = jmin(4.0f, width * 0.05f);
     auto valueArcOuterRadius = (width * 0.55f + valueLineWidth) * JUCE_LIVE_CONSTANT(0.9f); // value arc outside slider bounds, bigger than half the width
@@ -67,9 +70,11 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
 
         g.setFont(rswl->getTextHeight());
         auto text = rswl->getDisplayString();
-        auto strWidth = g.getCurrentFont().getStringWidth(text);
+        juce::TextLayout layout;
+        layout.createLayout(juce::AttributedString(text), 200.f);
+        auto strWidth = layout.getWidth();
         
-        r.setSize(strWidth + 18.f, (rswl->getTextHeight() + 7.5f));
+        r.setSize(strWidth + 30.f, (rswl->getTextHeight() + 8.75f));
         r.setCentre(center);
 
         g.setColour(enabled ? Colours::black : Colours::white);
