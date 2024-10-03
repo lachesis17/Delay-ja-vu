@@ -1,8 +1,18 @@
 cmake_minimum_required(VERSION 3.21)
 project(Delay-ja-vu VERSION 1.0.0)
 
-set(CMAKE_C_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
-set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
+# set(CMAKE_C_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
+# set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
+
+find_program(C_COMPILER NAMES cl)
+find_program(CXX_COMPILER NAMES cl)
+
+if(C_COMPILER AND CXX_COMPILER)
+    set(CMAKE_C_COMPILER ${C_COMPILER})
+    set(CMAKE_CXX_COMPILER ${CXX_COMPILER})
+else()
+    message(FATAL_ERROR "MSVC not found")
+endif()
 
 #add_subdirectory(Ext/JUCE)
 
