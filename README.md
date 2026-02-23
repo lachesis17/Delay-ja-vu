@@ -26,4 +26,4 @@
 
 https://github.com/lachesis17/Delay-ja-vu/assets/78860436/a0a78ab2-b4ae-4e18-bae7-e095366699a0
 
-_Copyright (c) 2023-2024, lachesis17 - All rights reserved._
+_Copyright (c) 2023-2026, lachesis17 - All rights reserved._
