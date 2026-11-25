@@ -71,7 +71,7 @@ class DelayLine
 {
 public:
 	explicit DelayLine(double sampleRate)
-	: currentSampleRate(sampleRate), 
+	: currentSampleRate(sampleRate),
 	coeff(1.0f - static_cast<float>(std::exp(-1.0f / (0.1f * sampleRate)))) {}
 
 	//==============================================================================
@@ -137,10 +137,10 @@ public:
 			chorusPhase -= static_cast<float>(2.0 * juce::MathConstants<float>::pi);
 		}
 
-		if (newDelayTime != delayTimeSmooth.getCurrentValue() && newDelayTime != 0.f) 
+		if (newDelayTime != delayTimeSmooth.getCurrentValue() && newDelayTime != 0.f)
 		{
 			delayTimeSmooth.setTargetValue(newDelayTime + chorusModulation);
-		} 
+		}
 		else
 		{
 			delayTimeSmooth.setTargetValue(newDelayTime);
@@ -191,7 +191,7 @@ private:
 	double currentSampleRate;
 	int writeIndex = 0;
 
-	float chorusRate = 0.45f; 
+	float chorusRate = 0.45f;
 	float chorusDepth = 0.75f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;

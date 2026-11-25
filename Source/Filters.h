@@ -14,15 +14,15 @@ public:
 
     void setupFilters()
     {
-        leftLowPass.reset(); 
+        leftLowPass.reset();
         rightLowPass.reset();
-        leftHighPass.reset(); 
+        leftHighPass.reset();
         rightHighPass.reset();
         leftLowAll.reset();
         rightLowAll.reset();
 
         juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLow = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 2000);     //const double highSampleRate = 1e6; // 1mil hz
-        juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500); 
+        juce::dsp::IIR::Coefficients<float>::Ptr coefficientsHigh = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, 500);
         juce::dsp::IIR::Coefficients<float>::Ptr coefficientsLowAll = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, 7000);
 
         leftLowPass.coefficients = coefficientsLow;
@@ -51,7 +51,7 @@ public:
     {
         if (left)
             return leftHighPass.processSample(sample);
-            
+
         return rightHighPass.processSample(sample);
     }
 

@@ -44,7 +44,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
     g.setColour(enabled ? Colour(250u, 250u, 250u) : Colours::grey);
     g.strokePath(valueArc, PathStrokeType(valueLineWidth, PathStrokeType::curved));
 
-    
+
     g.setColour(enabled ? Colour(250u, 250u, 250u) : Colour(Colours::black));
     g.drawEllipse(bounds.reduced(JUCE_LIVE_CONSTANT(15.f)), 2.5f); // white border for all the sliders
 
@@ -73,7 +73,7 @@ float rotaryStartAngle, float rotaryEndAngle, juce::Slider &slider)
         juce::TextLayout layout;
         layout.createLayout(juce::AttributedString(text), 200.f);
         auto strWidth = layout.getWidth();
-        
+
         r.setSize(strWidth + 30.f, (rswl->getTextHeight() + 8.75f));
         r.setCentre(center);
 
@@ -108,8 +108,8 @@ juce::ColourGradient RotaryLookAndFeel::getSliderGradient(int width, int height,
 }
 
 void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
-                        juce::ToggleButton &toggleButton, 
-                        [[maybe_unused]] bool shouldDrawButtonAsHighlighted, 
+                        juce::ToggleButton &toggleButton,
+                        [[maybe_unused]] bool shouldDrawButtonAsHighlighted,
                         [[maybe_unused]] bool shouldDrawButtonAsDown)
 {
     using namespace juce;
@@ -118,7 +118,7 @@ void RotaryLookAndFeel::drawToggleButton(juce::Graphics &g,
     auto bounds = toggleButton.getLocalBounds();
     // g.setColour(Colours::yellow);
     // g.drawRect(bounds);
-    
+
     bool scale = bounds.getWidth() > bounds.getHeight();
     auto size = scale ?  bounds.getHeight() * 0.2f : bounds.getHeight() * JUCE_LIVE_CONSTANT(0.2f); // toggle button size
     auto r = bounds.withSizeKeepingCentre(static_cast<int>(size), static_cast<int>(size)).toFloat();
@@ -165,7 +165,7 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     // g.setColour(Colours::yellow);
     // g.drawRect(sliderBounds);
 
-    getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), 
+    getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(),
     static_cast<float>(jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0)), startAng, endAng, *this);
 }
 
@@ -288,7 +288,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.setGradientFill(ColourGradient(Colour(23, 0, 62), 0.125f * (float)getWidth(), 0.125f * (float)getHeight(),
                                      Colour(0, 0, 0), 0.875f * (float)getWidth(), 0.875f * (float)getHeight(), true));
     g.fillAll();
-    
+
     g.setColour(juce::Colours::white);
     juce::FontOptions fontOptions = juce::FontOptions(typeface).withHeight(15.5f).withStyle("plain");
     g.setFont(juce::Font(fontOptions)); // slider labels
@@ -340,7 +340,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
         audioProcessor.getInputSignalLevel(),
         audioProcessor.getOutputSignalLevel()
     };
-    
+
     for (auto& level : visualiserLevels)
     {
         level = juce::jlimit(0.0f, 1.0f, level);
@@ -377,7 +377,7 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
                 g.setColour(juce::Colours::white.withAlpha(0.8f));      // active
                 g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners
             }
-            else 
+            else
             {
                 g.setColour(juce::Colours::white.withAlpha(0.2f));      // inactive
                 g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners

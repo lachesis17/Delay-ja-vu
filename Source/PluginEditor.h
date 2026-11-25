@@ -13,14 +13,14 @@ struct RotaryLookAndFeel : juce::LookAndFeel_V4
                       juce::Slider&) override;
 
   void drawToggleButton (juce::Graphics &g, // line 119
-                      juce::ToggleButton &toggleButton, 
-                      bool shouldDrawButtonAsHighlighted, 
+                      juce::ToggleButton &toggleButton,
+                      bool shouldDrawButtonAsHighlighted,
                       bool shouldDrawButtonAsDown) override;
 
   juce::ColourGradient getSliderGradient(int width, int height, bool enabled) const;
 
   //Font getLabelFont (Label&) override;
-    
+
 private:
 
 const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(BinaryData::Orbitron_ttf, BinaryData::Orbitron_ttfSize);
@@ -31,7 +31,7 @@ const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor(Bin
 
 struct RotarySliderWithLabels : juce::Slider, juce::Timer
 {
-  RotarySliderWithLabels(juce::RangedAudioParameter& rap, const juce::String& unitSuffix) : 
+  RotarySliderWithLabels(juce::RangedAudioParameter& rap, const juce::String& unitSuffix) :
   juce::Slider(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag, juce::Slider::TextEntryBoxPosition::NoTextBox),
   param(&rap),
   suffix(unitSuffix)
@@ -166,7 +166,7 @@ struct BPMLabel : juce::Label
     juce::FontOptions fontOptions = juce::FontOptions(typeface).withHeight(11.5f).withStyle("plain");
     setFont(juce::Font(fontOptions));
     setColour(juce::Label::textColourId, juce::Colours::white);
-  }   
+  }
 };
 
 //==============================================================================

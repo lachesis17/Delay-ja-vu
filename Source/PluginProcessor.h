@@ -106,7 +106,7 @@ private:
 	float dryWetRight = 0.f;
 	float reverbLevel = 0.f;
 
-	float chorusRate = 0.45f; 
+	float chorusRate = 0.45f;
 	float chorusDepth = 0.33f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;

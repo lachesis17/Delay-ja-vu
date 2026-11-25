@@ -95,5 +95,8 @@
         "cinttypes": "cpp",
         "xmemory0": "cpp"
     },
-    "C_Cpp.default.compilerPath": "cl.exe"
+    "C_Cpp.default.compilerPath": "cl.exe",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.trimAutoWhitespace": true,
 }

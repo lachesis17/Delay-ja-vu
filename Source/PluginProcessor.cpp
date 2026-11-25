@@ -226,7 +226,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             if (channel == 0) //== LEFT CHANNEL
             {
                 //== CHORUS & DELAY
-                smoothedChorus.skip(sample); 
+                smoothedChorus.skip(sample);
                 float newDelay = applyChorus(sample, smoothedChorus.getCurrentValue(), *leftDelay, newDelayTimeLeft);
                 leftDelay->updateDelayTime(newDelay);
 
@@ -234,7 +234,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
 
                 //== LOW PASS
                 currentLowPassMix = smoothedLowPassMix.getNextValue();
-                float lowPassSample = filters->processLowFilter(true, delayedSample);          
+                float lowPassSample = filters->processLowFilter(true, delayedSample);
                 delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
                 //== HIGH PASS
@@ -244,7 +244,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
 
                 //== GENERAL LOW PASS
                 delayedSample = filters->processGeneralLowFilter(true, delayedSample);
-                
+
                 //== MIXING
                 leftDelay->writeDelayBuffer(inData[sample], feedbackTime, delayedSample);
                 float wetScale = (1.0f - dryWetLeft) + dryWetLeft * 0.5f;  // making this to control the volume changes when mixing dry/wet signals
@@ -254,19 +254,19 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             else if (channel == 1) //== RIGHT CHANNEL
             {
                 //== CHORUS & DELAY
-                smoothedChorus.skip(sample); 
+                smoothedChorus.skip(sample);
                 float newDelay = applyChorus(sample, smoothedChorus.getCurrentValue(), *rightDelay, newDelayTimeRight);
                 rightDelay->updateDelayTime(newDelay);
 
                 float delayedSample = rightDelay->readBufferDelayedSample();
 
                 //== LOW PASS
-                currentLowPassMix = smoothedLowPassMix.getNextValue(); 
+                currentLowPassMix = smoothedLowPassMix.getNextValue();
                 float lowPassSample = filters->processLowFilter(false, delayedSample);
                 delayedSample = (1.0f - currentLowPassMix) * delayedSample + currentLowPassMix * lowPassSample;
 
                 //== HIGH PASS
-                currentHighPassMix = smoothedHighPassMix.getNextValue(); 
+                currentHighPassMix = smoothedHighPassMix.getNextValue();
                 float highPassSample = filters->processHighFilter(false, delayedSample);
                 delayedSample = (1.0f - currentHighPassMix) * delayedSample + currentHighPassMix * highPassSample;
 
@@ -276,7 +276,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
                 //== MIXING
                 rightDelay->writeDelayBuffer(inData[sample], feedbackTime, delayedSample);
                 float wetScale = (1.0f - dryWetRight) + dryWetRight * 0.5f;
-                outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
+                outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample;
                 rightDelay->updateWriteIndex();
             }
         }
@@ -294,13 +294,13 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             currentReverbMix = smoothedReverb.getNextValue();
             float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5f;
 
-            float combinedReverb = reverbLines->applyReverb(true, left[sample], reverbLevel);
+            float combinedReverb = reverbLines->applyReverb(true, left[sample]);
             combinedReverb = wetReverb * left[sample] + reverbLevel * combinedReverb;
             left[sample] = (1.0f - currentReverbMix) * left[sample] + currentReverbMix * combinedReverb;
 
             if (right != nullptr)
             {
-                combinedReverb = reverbLines->applyReverb(false, right[sample], reverbLevel);
+                combinedReverb = reverbLines->applyReverb(false, right[sample]);
                 combinedReverb = wetReverb * right[sample] + reverbLevel * combinedReverb;
                 right[sample] = (1.0f - currentReverbMix) * right[sample] + currentReverbMix * combinedReverb;
             }
@@ -351,10 +351,10 @@ void DelayAudioProcessor::setStateInformation (const void* data, int sizeInBytes
         chorusPhase += 2.0f * juce::MathConstants<float>::pi;
     }
 
-    if (newDelayTime != delayLine.getSmoothedCurrent() && newDelayTime != 0.f) 
+    if (newDelayTime != delayLine.getSmoothedCurrent() && newDelayTime != 0.f)
     {
         delayLine.setNewTarget(newDelayTime + chorusModulation); // target + chorus + large ramp = yes
-    } 
+    }
     else
     {
         delayLine.setNewTarget(newDelayTime);
