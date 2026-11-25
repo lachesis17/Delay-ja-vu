@@ -169,6 +169,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     const int numChannels = buffer.getNumChannels();
     const int numSamples = buffer.getNumSamples();
 
+    //== BPM
+    updateCurrentBPM();
+
     //== PARAMETERS
     auto chainsettings = getChainSettings(apvts);
     float newFeedbackTime = chainsettings.feedbackTime;
@@ -405,19 +408,12 @@ void DelayAudioProcessor::toggleButtonStateMixes(bool lowPass, bool highPass, bo
     return applyOnePoleFilter(drywet, smoothedwrywet.getNextValue(), newDelayTime == 0.f ? coeff_lrg : coeff_sml);
 }
 
-[[nodiscard]] float DelayAudioProcessor::getCurrentBPM()
+void DelayAudioProcessor::updateCurrentBPM()
 {
-    AudioPlayHead* playhead = getPlayHead();
-    AudioPlayHead::CurrentPositionInfo positionInfo;
-
-    if (playhead && playhead->getPosition())
-    {
-        if (positionInfo.bpm > 0)
-        {
-            return static_cast<float>(positionInfo.bpm);
-        }
-    }
-    return 120.0f;
+    if (AudioPlayHead* playhead = getPlayHead())
+        if (auto position = playhead->getPosition())        // empty if host gives no position
+            if (auto bpm = position->getBpm())              // empty if host gives no tempo
+                currentBPM.store(static_cast<float>(*bpm));
 }
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts) {

@@ -73,7 +73,7 @@ public:
 	juce::AudioProcessorValueTreeState apvts;
 
 	ApplicationProperties& getAppProperties() { return appProperties; }
-	float getCurrentBPM();
+	float getCurrentBPM() const { return currentBPM.load(); }
 	float getInputSignalLevel() const { return inputSignalLevel; }
 	float getOutputSignalLevel() const { return outputSignalLevel; }
 
@@ -84,6 +84,7 @@ private:
 	[[nodiscard]] float applyOnePoleFilter(float current, float next, float coefficient);
 	[[nodiscard]] float setDryWetMix(float newDelayTime, float dryWet, float newDryWet, SmoothedValue<float, ValueSmoothingTypes::Linear>& smoothedDryWet);
 	void toggleButtonStateMixes(bool lowPass, bool highPass, bool chorus, bool reverb);
+	void updateCurrentBPM();
 
 	juce::LinearSmoothedValue<float> smoothedFeedback, smoothedDryWet, smoothedLowPassMix, smoothedHighPassMix, smoothedChorus, smoothedReverb, smoothedReverbLevel;
 
@@ -114,6 +115,8 @@ private:
 
 	float inputSignalLevel = 0.f;
 	float outputSignalLevel = 0.f;
+
+	std::atomic<float> currentBPM { 120.0f };
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
