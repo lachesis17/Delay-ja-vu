@@ -32,6 +32,14 @@ public:
             reverbLowPassLeft[i] = 0.f;
             reverbLowPassRight[i] = 0.f;
         }
+
+        // ALL PASS
+        for (size_t i = 0; i < reverbAllPassLeft.size(); ++i) {
+            allPassSamplesLeft[i] = static_cast<int>(std::lround(fixedAllPassTimesLeft[i] * currentSampleRate / 1000.0));
+            allPassSamplesRight[i] = static_cast<int>(std::lround(fixedAllPassTimesRight[i] * currentSampleRate / 1000.0));
+            reverbAllPassLeft[i].createCircularBuffer(static_cast<unsigned int>(allPassSamplesLeft[i]));
+            reverbAllPassRight[i].createCircularBuffer(static_cast<unsigned int>(allPassSamplesRight[i]));
+        }
     }
 
     float applyOnePoleFilter(float current, float next, float coefficient)
@@ -45,6 +53,8 @@ public:
         const std::array<float, numCombs>* fixedDelayTimes;
         const std::array<float, numCombs>* reverbDecay;
         std::array<float, numCombs>* reverbLowPass;
+        std::array<CircularBuffer<float>, numAllPasses>* reverbAllPass;
+        const std::array<int, numAllPasses>* allPassSamples;
 
         if (left)
         {
@@ -52,6 +62,8 @@ public:
             fixedDelayTimes = &fixedDelayTimesLeft;
             reverbDecay = &reverbDecayLeft;
             reverbLowPass = &reverbLowPassLeft;
+            reverbAllPass = &reverbAllPassLeft;
+            allPassSamples = &allPassSamplesLeft;
         }
         else
         {
@@ -59,6 +71,8 @@ public:
             fixedDelayTimes = &fixedDelayTimesRight;
             reverbDecay = &reverbDecayRight;
             reverbLowPass = &reverbLowPassRight;
+            reverbAllPass = &reverbAllPassRight;
+            allPassSamples = &allPassSamplesRight;
         }
 
         float combinedReverb = 0.0f;
@@ -89,12 +103,23 @@ public:
                 (*reverbDelays)[i]->updateWriteIndex();
             }
 
+        //== ALL PASS (schroeder)
+        for (size_t i = 0; i < reverbAllPass->size(); ++i)
+            {
+                float delayedAllPass = (*reverbAllPass)[i].readBuffer((*allPassSamples)[i] - 1);     // readBuffer(n) is n + 1 samples ago
+                float toBuffer = combinedReverb + allPassGain * delayedAllPass;
+                (*reverbAllPass)[i].writeBuffer(toBuffer);
+                combinedReverb = delayedAllPass - allPassGain * toBuffer;
+            }
+
         return combinedReverb * outputGain;
     }
 
 private:
     static constexpr size_t numCombs = 8;
+    static constexpr size_t numAllPasses = 4;
     static constexpr float inputGain = 0.03f;   // each comb stacks up so feed quietly
+    static constexpr float allPassGain = 0.5f;  // how much each allpass smears
 
     double currentSampleRate;
     float coeff;
@@ -112,4 +137,11 @@ private:
     std::array<float, numCombs> reverbDecayRight;
     std::array<float, numCombs> reverbLowPassLeft;      // damping filter memory, one per comb
     std::array<float, numCombs> reverbLowPassRight;
+
+    const std::array<float, numAllPasses> fixedAllPassTimesLeft = {12.608f, 10.000f, 7.732f, 5.102f};
+    const std::array<float, numAllPasses> fixedAllPassTimesRight = {13.129f, 10.522f, 8.254f, 5.624f};
+    std::array<int, numAllPasses> allPassSamplesLeft;
+    std::array<int, numAllPasses> allPassSamplesRight;
+    std::array<CircularBuffer<float>, numAllPasses> reverbAllPassLeft;
+    std::array<CircularBuffer<float>, numAllPasses> reverbAllPassRight;
 };
