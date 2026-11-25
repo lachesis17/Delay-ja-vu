@@ -185,7 +185,7 @@ public:
 private:
 	CircularBuffer<float> circBuff;
 	juce::LinearSmoothedValue<float> smoothedDelayTime;
-	float delayTime;
+	float delayTime = 0.f;		// must define value or bigbadaboom (feeds back into itself every sample)
 
 	float coeff;
 	double currentSampleRate;

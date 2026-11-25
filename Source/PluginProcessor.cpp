@@ -161,6 +161,7 @@ bool DelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 
 void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[maybe_unused]] juce::MidiBuffer& midiMessages)
 {
+    juce::ScopedNoDenormals noDenormals;        // decaying feedback tails turn into denormals
 
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
         buffer.clear (i, 0, buffer.getNumSamples());

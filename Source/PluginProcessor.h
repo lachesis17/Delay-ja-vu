@@ -90,28 +90,29 @@ private:
 	std::unique_ptr<DelayLine> leftDelay, rightDelay;
 	std::unique_ptr<ReverbLines> reverbLines;
 	std::unique_ptr<Filters> filters;
-	double currentSampleRate;
-	
-	float currentLowPassMix, targetLowPassMix, currentHighPassMix, targetHighPassMix, targetChorusMix, currentReverbMix, targetReverbMix = 0.f;
+	double currentSampleRate = 44100.0;
+
+	// dont uninit floats since they can hold NaN (do not want in feedback!)
+	float currentLowPassMix = 0.f, targetLowPassMix = 0.f, currentHighPassMix = 0.f, targetHighPassMix = 0.f, targetChorusMix = 0.f, currentReverbMix = 0.f, targetReverbMix = 0.f;
 
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;
-	float coeff;
-	float coeff_sml;
-	float coeff_lrg;
-	float feedbackTime;
-	float dryWet;
-	float dryWetLeft;
-	float dryWetRight;
-	float reverbLevel;
+	float coeff = 0.f;
+	float coeff_sml = 0.f;
+	float coeff_lrg = 0.f;
+	float feedbackTime = 0.f;
+	float dryWet = 0.f;
+	float dryWetLeft = 0.f;
+	float dryWetRight = 0.f;
+	float reverbLevel = 0.f;
 
 	float chorusRate = 0.45f; 
 	float chorusDepth = 0.33f;
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
 
-	float inputSignalLevel;
-	float outputSignalLevel;
+	float inputSignalLevel = 0.f;
+	float outputSignalLevel = 0.f;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelayAudioProcessor)
