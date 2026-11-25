@@ -94,6 +94,7 @@ private:
 
 	// dont uninit floats since they can hold NaN (do not want in feedback!)
 	float currentLowPassMix = 0.f, targetLowPassMix = 0.f, currentHighPassMix = 0.f, targetHighPassMix = 0.f, targetChorusMix = 0.f, currentReverbMix = 0.f, targetReverbMix = 0.f;
+	bool reverbCleared = true;
 
 	int writeIndexLeft = 0;
 	int writeIndexRight = 0;

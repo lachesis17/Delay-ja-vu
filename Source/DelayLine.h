@@ -164,6 +164,11 @@ public:
 		circBuff.flushBuffer();
 	}
 
+	void flushBuffer()
+	{
+		circBuff.flushBuffer();
+	}
+
 	float readBufferDelayedSample()
 	{
 		float delayedSample = circBuff.readBuffer(delayTime * currentSampleRate / 1000.0);

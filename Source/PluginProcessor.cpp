@@ -65,7 +65,7 @@ bool DelayAudioProcessor::isMidiEffect() const
 
 double DelayAudioProcessor::getTailLengthSeconds() const
 {
-    return 0.0;
+    return ReverbLines::maxDecaySeconds;    // tells host to keep processing after input stops, keeps tails
 }
 
 int DelayAudioProcessor::getNumPrograms()
@@ -283,8 +283,17 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     }
 
     //== REVERB     (after delay loop so L/R go through together)
-    if (numChannels > 0)
+    const bool reverbOff = ! reverb && ! smoothedReverb.isSmoothing();
+    if (reverbOff && ! reverbCleared)
     {
+        reverbLines->reset();
+        reverbCleared = true;
+    }
+
+    if (numChannels > 0 && ! reverbOff)
+    {
+        reverbCleared = false;
+
         float* left = buffer.getWritePointer(0);
         float* right = numChannels > 1 ? buffer.getWritePointer(1) : nullptr;
 

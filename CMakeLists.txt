@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Delay-ja-vu VERSION 1.0.0)
+project(Delay-ja-vu VERSION 1.1.0)
 
 # set(CMAKE_C_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
 # set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
@@ -25,7 +25,7 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
         GIT_TAG origin/master
         GIT_SHALLOW ON
-        [[FIND_PACKAGE_ARGS 8.0.1 GLOBAL]] <-- Uncomment this funny little character if you don't wanna redownload juce every project but you gotta do some shennanigans which the juce cmake api docs talk you thru 
+        [[FIND_PACKAGE_ARGS 8.0.1 GLOBAL]] <-- Uncomment this funny little character if you don't wanna redownload juce every project but you gotta do some shennanigans which the juce cmake api docs talk you thru
 )
 FetchContent_MakeAvailable(JUCE)
 
@@ -37,7 +37,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 juce_add_plugin(Delay-ja-vu
-        VERSION 1.0.0
+        VERSION 1.1.0
         COMPANY_NAME lachesis17
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
