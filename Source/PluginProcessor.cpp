@@ -294,14 +294,16 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
             currentReverbMix = smoothedReverb.getNextValue();
             float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5f;
 
-            float combinedReverb = reverbLines->applyReverb(true, left[sample]);
-            combinedReverb = wetReverb * left[sample] + reverbLevel * combinedReverb;
+            float reverbLeft = 0.f;
+            float reverbRight = 0.f;
+            reverbLines->applyReverb(left[sample], right != nullptr ? right[sample] : left[sample], reverbLeft, reverbRight);
+
+            float combinedReverb = wetReverb * left[sample] + reverbLevel * reverbLeft;
             left[sample] = (1.0f - currentReverbMix) * left[sample] + currentReverbMix * combinedReverb;
 
             if (right != nullptr)
             {
-                combinedReverb = reverbLines->applyReverb(false, right[sample]);
-                combinedReverb = wetReverb * right[sample] + reverbLevel * combinedReverb;
+                combinedReverb = wetReverb * right[sample] + reverbLevel * reverbRight;
                 right[sample] = (1.0f - currentReverbMix) * right[sample] + currentReverbMix * combinedReverb;
             }
         }
