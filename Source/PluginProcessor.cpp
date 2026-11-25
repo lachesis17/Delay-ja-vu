@@ -211,9 +211,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
     dryWetRight = setDryWetMix(newDelayTimeRight, dryWet, newDryWet, smoothedDryWet);
 
-    //== REVERB DELAY TIMES
-    reverbLines->updateTargetDelayTimes();
-
     //== PROCESSING LOOP
     for (int channel = 0; channel < numChannels; ++channel)
     {
