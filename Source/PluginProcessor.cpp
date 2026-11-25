@@ -206,7 +206,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     feedbackTime = applyOnePoleFilter(smoothedFeedback.getCurrentValue(), smoothedFeedback.getNextValue(), coeff_sml);
 
     smoothedReverbLevel.setTargetValue(newReverbLevel);
-    reverbLevel = applyOnePoleFilter(smoothedReverbLevel.getCurrentValue(), smoothedReverbLevel.getNextValue(), coeff_sml);
 
     //== MIXING & BYPASS
     dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
@@ -254,13 +253,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
                 float wetScale = (1.0f - dryWetLeft) + dryWetLeft * 0.5f;  // making this to control the volume changes when mixing dry/wet signals
                 outData[sample] = wetScale * inData[sample] + dryWetLeft * delayedSample;  // dry / wet   //outData[sample] = delayedSample; // 100% wet  // outData[sample] = (1.0f - dryWet) * inData[sample] + dryWet * delayedSample; // original
                 leftDelay->updateWriteIndex();
-
-                //== REVERB
-                float combinedReverb = reverbLines->applyReverb(true, inData[sample], reverbLevel);
-                float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5f;
-                combinedReverb = wetReverb * outData[sample] + reverbLevel * combinedReverb;
-                currentReverbMix = smoothedReverb.getNextValue();       
-                outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
             else if (channel == 1) //== RIGHT CHANNEL
             {
@@ -289,19 +281,39 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
                 float wetScale = (1.0f - dryWetRight) + dryWetRight * 0.5f;
                 outData[sample] = wetScale * inData[sample] + dryWetRight * delayedSample; 
                 rightDelay->updateWriteIndex();
-
-                //== REVERB;
-                float combinedReverb = reverbLines->applyReverb(false, inData[sample], reverbLevel);
-                float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5f;
-                combinedReverb = wetReverb * outData[sample] + reverbLevel * combinedReverb;
-                currentReverbMix = smoothedReverb.getNextValue();       
-                outData[sample] += (1.0f - currentReverbMix) * outData[sample] + currentReverbMix * combinedReverb;
             }
-            newOutputSignalLevel = fmaxf(newOutputSignalLevel, fabsf(outData[sample]));
-            outputSignalLevel = newOutputSignalLevel * 1.25f;
-            outputSignalLevel = fminf(outputSignalLevel, 1.0f);       // keep it below 1
         }
     }
+
+    //== REVERB     (after delay loop so L/R go through together)
+    if (numChannels > 0)
+    {
+        float* left = buffer.getWritePointer(0);
+        float* right = numChannels > 1 ? buffer.getWritePointer(1) : nullptr;
+
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            reverbLevel = smoothedReverbLevel.getNextValue();
+            currentReverbMix = smoothedReverb.getNextValue();
+            float wetReverb = (1.0f - reverbLevel) + reverbLevel * 0.5f;
+
+            float combinedReverb = reverbLines->applyReverb(true, left[sample], reverbLevel);
+            combinedReverb = wetReverb * left[sample] + reverbLevel * combinedReverb;
+            left[sample] = (1.0f - currentReverbMix) * left[sample] + currentReverbMix * combinedReverb;
+
+            if (right != nullptr)
+            {
+                combinedReverb = reverbLines->applyReverb(false, right[sample], reverbLevel);
+                combinedReverb = wetReverb * right[sample] + reverbLevel * combinedReverb;
+                right[sample] = (1.0f - currentReverbMix) * right[sample] + currentReverbMix * combinedReverb;
+            }
+        }
+    }
+
+    //== OUTPUT METER
+    newOutputSignalLevel = buffer.getMagnitude(0, numSamples);     // loudest sample over both channels
+    outputSignalLevel = newOutputSignalLevel * 1.25f;
+    outputSignalLevel = fminf(outputSignalLevel, 1.0f);            // keep it below 1
 }
 
 //==============================================================================
