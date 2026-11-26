@@ -181,11 +181,11 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-  void DelayAudioProcessorEditor::timerCallback()
-  {
-    updateBPMLabel();
-  }
-  void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabels &slider);
+    void timerCallback() override
+    {
+        updateBPMLabel();
+    }
+    void setSliderState(bool state, RotarySliderWithLabels &slider);
 
 private:
     // This reference is provided as a quick way for your editor to

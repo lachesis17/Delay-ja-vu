@@ -1,5 +1,6 @@
 **/build
 **/builds
+.DS_Store
 
 # Prerequisites
 *.d
