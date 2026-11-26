@@ -235,7 +235,9 @@ DelayAudioProcessorEditor::DelayAudioProcessorEditor (DelayAudioProcessor& p)
     reverbSlider(*audioProcessor.apvts.getParameter("Reverb Level"), "", audioProcessor.apvts, "Reverb"),
     reverbSliderAttachement(audioProcessor.apvts, "Reverb Level", reverbSlider),
     chorusSlider(*audioProcessor.apvts.getParameter("Chorus Rate"), "", audioProcessor.apvts, "Chorus"),
-    chorusSliderAttachement(audioProcessor.apvts, "Chorus Rate", chorusSlider)
+    chorusSliderAttachement(audioProcessor.apvts, "Chorus Rate", chorusSlider),
+    inputVisualiser(p.getInputSignalLevels(), "In"),
+    outputVisualiser(p.getOutputSignalLevels(), "Out")
 {
 
     bpmLabel.setText("120 BPM", juce::dontSendNotification);     //bpmLabel.onClick = [this] { this->updateBPMLabel(); };
@@ -333,72 +335,17 @@ void DelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText("Low Pass", lowPassLabelBounds, juce::Justification::centred, 1);
     g.drawFittedText("High Pass", highPassLabelBounds, juce::Justification::centred, 1);
     g.drawFittedText("Reverb", reverbLabelBounds, juce::Justification::centred, 1);
-
-    // input and output level visualisers
-    float visualiserLevels[2] =
-    {
-        audioProcessor.getInputSignalLevel(),
-        audioProcessor.getOutputSignalLevel()
-    };
-
-    for (auto& level : visualiserLevels)
-    {
-        level = juce::jlimit(0.0f, 1.0f, level);
-    }
-
-    int visualiserPosX[2] =
-    {
-        static_cast<int>(getWidth() - (getWidth() * JUCE_LIVE_CONSTANT(0.98f))),
-        static_cast<int>(getWidth() * JUCE_LIVE_CONSTANT(0.9633f))
-    };
-
-    int visualiserPosY = 100;
-    int visualiserWidth = 20;
-    int visualiserHeight = getHeight() - 200;
-    int segmentGap = 5;
-    const int numSegments = 40;
-    float segmentHeight = (visualiserHeight - (numSegments - 1) * segmentGap) / (float)numSegments;
-
-    for (int j = 0; j < 2; ++j)
-    {
-        // g.setColour(juce::Colours::darkgrey.withAlpha(0.5f));        // meter background
-        // g.fillRect(visualiserPosX[j], visualiserPosY, visualiserWidth, visualiserHeight);
-
-        int bottom = visualiserPosY + visualiserHeight;
-        juce::Rectangle<int> labelBounds((visualiserPosX[j] + visualiserWidth / 2) - 30 / 2, bottom + 10, 30, 20);
-
-        for (int i = 0; i < numSegments; ++i)
-        {
-            int segmentTop = visualiserPosY + static_cast<int>((segmentHeight + segmentGap) * i);
-            int segmentBottom = visualiserPosY + visualiserHeight - (segmentTop - visualiserPosY) - static_cast<int>(segmentHeight);
-
-            if (visualiserLevels[j] * numSegments > i || (i == 0 && visualiserLevels[j] > 1.0f / numSegments))
-            {
-                g.setColour(juce::Colours::white.withAlpha(0.8f));      // active
-                g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners
-            }
-            else
-            {
-                g.setColour(juce::Colours::white.withAlpha(0.2f));      // inactive
-                g.fillRoundedRectangle(static_cast<float>(visualiserPosX[j]), static_cast<float>(segmentBottom), static_cast<float>(visualiserWidth), static_cast<float>(segmentHeight), 3.0f); // 3.0f == rounded corners
-            }
-        }
-        g.setColour(juce::Colours::white);
-        g.drawFittedText(j == 0 ? "In" : "Out", labelBounds, juce::Justification::centred, 1);
-        // // drop shadow
-        // int activeHeight = static_cast<int>(visualiserLevels[j] * numSegments * (segmentHeight + segmentGap));
-        // if (activeHeight > 0) activeHeight -= static_cast<int>(segmentGap);
-        // int activeY = visualiserPosY + visualiserHeight - activeHeight;
-        // if (activeHeight > 0)
-        // {
-        //     juce::DropShadow shadow(juce::Colour(43u, 52u, 177u).withAlpha(0.5f), 25, juce::Point<int>(0, -5));
-        //     shadow.drawForRectangle(g, juce::Rectangle<int>(visualiserPosX[j], activeY, visualiserWidth, activeHeight));
-        // }
-    }
 }
 
 void DelayAudioProcessorEditor::resized()
 {
+    //== LEVEL VISUALISERS
+    const int visualiserMargin = static_cast<int>(getWidth() * 0.012f);
+    const int visualiserPosY = 100 - LevelVisualiser::topPadding;
+    const int visualiserHeight = getHeight() - 200 + LevelVisualiser::topPadding + LevelVisualiser::footerHeight;
+    inputVisualiser.setBounds(visualiserMargin, visualiserPosY, LevelVisualiser::preferredWidth, visualiserHeight);
+    outputVisualiser.setBounds(getWidth() - visualiserMargin - LevelVisualiser::preferredWidth, visualiserPosY, LevelVisualiser::preferredWidth, visualiserHeight);
+
     auto bounds = getLocalBounds().reduced(JUCE_LIVE_CONSTANT(50));
     auto delayArea = bounds.removeFromRight(bounds.getWidth());
     delayArea.removeFromTop(static_cast<int>(std::round(delayArea.getHeight() * JUCE_LIVE_CONSTANT(0.1f))));
@@ -442,6 +389,29 @@ void DelayAudioProcessorEditor::resized()
 
         highPassSlider.setBounds(static_cast<int>(highPassButtonX - toggleButtonWidth * 0.5f), static_cast<int>(highPassButtonY), static_cast<int>(toggleButtonWidth), static_cast<int>(toggleButtonHeight));
         highPassSlider.setBounds(highPassSlider.getBounds().getX(), highPassSlider.getBounds().getY(), highPassSlider.getBounds().getWidth(), static_cast<int>(lowPassHeight * 1.17));
+    }
+
+    //== padding for value arcs against visualisers
+    const int visualiserGap = 18;
+    const int arcOverhang = 5;      // arc reaches past knob
+    const int leftLimit = inputVisualiser.getRight() + visualiserGap;
+    const int rightLimit = outputVisualiser.getX() - visualiserGap;
+
+    for (auto* slider : std::initializer_list<RotarySliderWithLabels*> { &delayTimeSliderLeft, &delayTimeSliderRight, &feedbackSlider, &dryWetSlider })
+    {
+        for (int i = 0; i < 8; ++i)     // height-limited knobs only move half the trim, so few passes
+        {
+            const auto arcBounds = slider->getSliderBounds().translated(slider->getX(), slider->getY()).expanded(arcOverhang, 0);
+            const int overlapLeft = leftLimit - arcBounds.getX();
+            const int overlapRight = arcBounds.getRight() - rightLimit;
+            if (overlapLeft <= 0 && overlapRight <= 0)
+                break;
+
+            auto sliderBounds = slider->getBounds();
+            if (overlapLeft > 0)  sliderBounds.setLeft(sliderBounds.getX() + overlapLeft);
+            if (overlapRight > 0) sliderBounds.setRight(sliderBounds.getRight() - overlapRight);
+            slider->setBounds(sliderBounds);
+        }
     }
 
     float bpmY = windowHeight * JUCE_LIVE_CONSTANT(1.3f);
@@ -495,6 +465,8 @@ std::vector<juce::Component*> DelayAudioProcessorEditor::getComps()
     &lowPassSlider,
     &highPassSlider,
     &reverbSlider,
-    &bpmLabel
+    &bpmLabel,
+    &inputVisualiser,
+    &outputVisualiser
   };
 }
