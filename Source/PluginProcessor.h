@@ -4,6 +4,7 @@
 #include "DelayLine.h"
 #include "ReverbLines.h"
 #include "Filters.h"
+#include "SignalLevels.h"
 
 struct ChainSettings {
 	float delayTimeLeft {0};
@@ -74,8 +75,8 @@ public:
 
 	ApplicationProperties& getAppProperties() { return appProperties; }
 	float getCurrentBPM() const { return currentBPM.load(); }
-	float getInputSignalLevel() const { return inputSignalLevel; }
-	float getOutputSignalLevel() const { return outputSignalLevel; }
+	SignalLevels& getInputSignalLevels() { return inputSignalLevels; }
+	SignalLevels& getOutputSignalLevels() { return outputSignalLevels; }
 
 private:
 	ApplicationProperties appProperties;
@@ -113,8 +114,7 @@ private:
 	float chorusPhase = 0.f;
 	float chorusModulation = 0.f;
 
-	float inputSignalLevel = 0.f;
-	float outputSignalLevel = 0.f;
+	SignalLevels inputSignalLevels, outputSignalLevels;
 
 	std::atomic<float> currentBPM { 120.0f };
 

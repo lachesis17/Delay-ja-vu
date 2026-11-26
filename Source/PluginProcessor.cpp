@@ -187,8 +187,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     float newReverbLevel = chainsettings.reverbLevel;
     float newDelayTimeLeft = chainsettings.delayTimeLeft;
     float newDelayTimeRight = dualDelay ? chainsettings.delayTimeRight : chainsettings.delayTimeLeft;
-    float newInputSignalLevel = 0.f;
-    float newOutputSignalLevel = 0.f;
 
     //== TOGGLE MIXES
     toggleButtonStateMixes(lowPass, highPass, chorus, reverb);
@@ -214,6 +212,9 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     dryWetLeft = setDryWetMix(newDelayTimeLeft, dryWet, newDryWet, smoothedDryWet);
     dryWetRight = setDryWetMix(newDelayTimeRight, dryWet, newDryWet, smoothedDryWet);
 
+    //== INPUT METER
+    inputSignalLevels.updateLevels(buffer, getTotalNumInputChannels());
+
     //== PROCESSING LOOP
     for (int channel = 0; channel < numChannels; ++channel)
     {
@@ -222,10 +223,6 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            newInputSignalLevel = fmaxf(newInputSignalLevel, fabsf(inData[sample]));
-            inputSignalLevel = newInputSignalLevel * 1.25f;
-            inputSignalLevel = fminf(inputSignalLevel, 1.0f);       // keep it below 1
-
             if (channel == 0) //== LEFT CHANNEL
             {
                 //== CHORUS & DELAY
@@ -322,9 +319,7 @@ void DelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, [[mayb
     }
 
     //== OUTPUT METER
-    newOutputSignalLevel = buffer.getMagnitude(0, numSamples);     // loudest sample over both channels
-    outputSignalLevel = newOutputSignalLevel * 1.25f;
-    outputSignalLevel = fminf(outputSignalLevel, 1.0f);            // keep it below 1
+    outputSignalLevels.updateLevels(buffer, numChannels);
 }
 
 //==============================================================================

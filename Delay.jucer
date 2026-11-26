@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="WeqRwT" name="Delay" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="WeqRwT" name="Delay" projectType="audioplug" useAppConfig="0" version="1.2.0"
               addUsingNamespaceToJuceHeader="1" displaySplashScreen="1" jucerFormatVersion="1"
               companyName="lachesis" companyWebsite="github.com/lachesis17"
               companyEmail="github.com/lachesis17" pluginFormats="buildStandalone,buildVST3">
@@ -13,6 +13,14 @@
       <FILE id="zJKjSN" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="pIbNM9" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="dL7nQe" name="DelayLine.h" compile="0" resource="0" file="Source/DelayLine.h"/>
+      <FILE id="rV4LsX" name="ReverbLines.h" compile="0" resource="0" file="Source/ReverbLines.h"/>
+      <FILE id="fT2bWk" name="Filters.h" compile="0" resource="0" file="Source/Filters.h"/>
+      <FILE id="sG9LvP" name="SignalLevels.h" compile="0" resource="0" file="Source/SignalLevels.h"/>
+      <FILE id="lV3VcA" name="LevelVisualiser.cpp" compile="1" resource="0"
+            file="Source/LevelVisualiser.cpp"/>
+      <FILE id="lV8VhB" name="LevelVisualiser.h" compile="0" resource="0"
+            file="Source/LevelVisualiser.h"/>
     </GROUP>
     <FILE id="lTfhXt" name="Orbitron.ttf" compile="0" resource="1" file="Resources/Orbitron.ttf"/>
     <FILE id="o5Yh91" name="resources.rc" compile="0" resource="1" file="Resources/resources.rc"/>

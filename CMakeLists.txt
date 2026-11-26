@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(Delay-ja-vu VERSION 1.1.0)
+project(Delay-ja-vu VERSION 1.2.0)
 
 # set(CMAKE_C_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
 # set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
@@ -37,7 +37,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 juce_add_plugin(Delay-ja-vu
-        VERSION 1.1.0
+        VERSION 1.2.0
         COMPANY_NAME lachesis17
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
@@ -73,6 +73,9 @@ target_sources(Delay-ja-vu
         Source/DelayLine.h
         Source/ReverbLines.h
         Source/Filters.h
+        Source/SignalLevels.h
+        Source/LevelVisualiser.cpp
+        Source/LevelVisualiser.h
         Resources/resources.rc
         )
 

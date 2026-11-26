@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "LevelVisualiser.h"
 
 struct RotaryLookAndFeel : juce::LookAndFeel_V4
 {
@@ -183,7 +184,6 @@ public:
   void DelayAudioProcessorEditor::timerCallback()
   {
     updateBPMLabel();
-    repaint();
   }
   void DelayAudioProcessorEditor::setSliderState(bool state, RotarySliderWithLabels &slider);
 
@@ -227,6 +227,8 @@ private:
     BPMLabel bpmLabel;
     void updateBPMLabel();
     float lastBPM = 120.f;
+
+    LevelVisualiser inputVisualiser, outputVisualiser;
 
     std::vector<juce::Component*> getComps();
 
