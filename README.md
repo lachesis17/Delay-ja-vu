@@ -1,6 +1,7 @@
 # <img src="https://github.com/lachesis17/Delay-Plugin/assets/78860436/62340ccf-bfd4-40f3-a45f-291f1f91831e" width="30"> Delay-ja-vu
 
-![Delay-ja-vu](https://github.com/lachesis17/Delay-ja-vu/assets/78860436/d83ffbd9-c77e-48f6-b455-5264094772af)
+<img src="https://github.com/user-attachments/assets/559cd680-c4b4-4ee7-b221-affe6e91c392" />
+
 
 ### Features
 
@@ -23,6 +24,8 @@
 - [x] Reverb
 - [ ] Tape decay with drive/detune
 - [ ] Reverse (final boss)
+
+![Delay-ja-vu](https://github.com/user-attachments/assets/e7660e50-6f2d-48ae-9804-ddd8b67e8a94)
 
 https://github.com/lachesis17/Delay-ja-vu/assets/78860436/a0a78ab2-b4ae-4e18-bae7-e095366699a0
 
