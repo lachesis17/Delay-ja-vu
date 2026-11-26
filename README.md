@@ -9,13 +9,14 @@
 - [x] Stereo toggle
 - [x] Chorus toggle
 - [x] Add graphic of line drawing outside slider for value
+- [x] Mac support
 - [ ] 'Freeze' mode with feedback & dry/wet @ 1.0f (works, add to toggle)
 - [x] Lowpass / Highpass
 - [x] Fix popping on toggling Low/High pass
 - [x] Fix popping on toggling chorus & warping speeds from 0m/s ~~(tukey window)~~
 - [x] Filter coefficients, reverb level and chorus rate toggled with double-click slider
 - [ ] Ping Pong
-- [ ] Sync BPM
+- [x] Sync BPM
 - [ ] Add BPM divisions to time sliders (quarter, half etc.), needs to toggle with sync bpm state
 - [ ] Save presets with combo box
 - [x] Save width/height

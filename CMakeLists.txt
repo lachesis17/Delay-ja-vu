@@ -4,14 +4,16 @@ project(Delay-ja-vu VERSION 1.2.0)
 # set(CMAKE_C_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
 # set(CMAKE_CXX_COMPILER "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe")
 
-find_program(C_COMPILER NAMES cl)
-find_program(CXX_COMPILER NAMES cl)
+if(WIN32)
+    find_program(C_COMPILER NAMES cl)
+    find_program(CXX_COMPILER NAMES cl)
 
-if(C_COMPILER AND CXX_COMPILER)
-    set(CMAKE_C_COMPILER ${C_COMPILER})
-    set(CMAKE_CXX_COMPILER ${CXX_COMPILER})
-else()
-    message(FATAL_ERROR "MSVC not found")
+    if(C_COMPILER AND CXX_COMPILER)
+        set(CMAKE_C_COMPILER ${C_COMPILER})
+        set(CMAKE_CXX_COMPILER ${CXX_COMPILER})
+    else()
+        message(FATAL_ERROR "MSVC not found")
+    endif()
 endif()
 
 #add_subdirectory(Ext/JUCE)
@@ -76,8 +78,11 @@ target_sources(Delay-ja-vu
         Source/SignalLevels.h
         Source/LevelVisualiser.cpp
         Source/LevelVisualiser.h
-        Resources/resources.rc
         )
+
+if(WIN32)
+    target_sources(Delay-ja-vu PRIVATE Resources/resources.rc)
+endif()
 
 #add_subdirectory(Sources)
 
@@ -98,3 +103,11 @@ target_link_libraries(Delay-ja-vu
             juce::juce_recommended_config_flags
             juce::juce_recommended_lto_flags
             juce::juce_recommended_warning_flags)
+
+# JUCE signs VST3 bundle before it writes Contents/Resources/moduleinfo.json,
+# giving invalid signature, so sign again after build
+if(APPLE)
+    add_custom_command(TARGET Delay-ja-vu_VST3 POST_BUILD
+        COMMAND codesign --force --sign - "$<TARGET_BUNDLE_DIR:Delay-ja-vu_VST3>"
+        VERBATIM)
+endif()

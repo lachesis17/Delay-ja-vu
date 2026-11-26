@@ -17,7 +17,28 @@
           "CMAKE_CXX_COMPILER": "cl.exe",
           "CMAKE_BUILD_TYPE": "Release"
         }
+      },
+      {
+        "name": "macos",
+        "displayName": "macOS (Apple Clang)",
+        "description": "Use Apple Clang from the Xcode Command Line Tools",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/build/${presetName}",
+        "cacheVariables": {
+          "CMAKE_C_COMPILER": "clang",
+          "CMAKE_CXX_COMPILER": "clang++",
+          "CMAKE_BUILD_TYPE": "Release"
+        }
+      }
+    ],
+    "buildPresets": [
+      {
+        "name": "msvc",
+        "configurePreset": "msvc"
+      },
+      {
+        "name": "macos",
+        "configurePreset": "macos"
       }
     ]
 }
-  
